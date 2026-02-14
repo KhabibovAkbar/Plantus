@@ -104,7 +104,7 @@ export default function ProfileScreen() {
         ]);
       },
       showArrow: true,
-    },
+    },   
     {
       Icon: Gear,
       title: 'App Settings',

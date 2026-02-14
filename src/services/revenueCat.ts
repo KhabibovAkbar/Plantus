@@ -8,8 +8,8 @@ import { Platform } from 'react-native';
 
 import { useAppStore } from '../store/appStore';
 
-// RevenueCat configuration
-const REVENUECAT_API_KEY = 'test_PglJeJukmbdHZTxmckwTtfiTLWX';
+// RevenueCat configuration (test scope APIs commented out)
+// const REVENUECAT_API_KEY = 'test_PglJeJukmbdHZTxmckwTtfiTLWX';
 
 /** Entitlement ID for Plantus Pro - must match RevenueCat dashboard */
 export const ENTITLEMENT_ID = 'Plantus Pro';
@@ -35,32 +35,24 @@ const syncProStatus = (customerInfo: CustomerInfo | null) => {
  * Initialize RevenueCat SDK - call once at app startup
  */
 export const initializeRevenueCat = async (): Promise<void> => {
-  try {
-    await Purchases.configure({ apiKey: REVENUECAT_API_KEY });
-
-    if (__DEV__) {
-      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-    }
-
-    // Remove previous listener if any
-    if (customerInfoListenerRemove) {
-      customerInfoListenerRemove();
-      customerInfoListenerRemove = null;
-    }
-
-    // Listen for customer info updates (purchases, restores, expires)
-    customerInfoListenerRemove = Purchases.addCustomerInfoUpdateListener(
-      (customerInfo) => {
-        syncProStatus(customerInfo);
-      }
-    );
-
-    // Initial sync - get current customer info and set isPro
-    const customerInfo = await Purchases.getCustomerInfo();
-    syncProStatus(customerInfo);
-  } catch (error) {
-    console.error('[RevenueCat] Initialization error:', error);
-  }
+  // Test scope APIs commented out
+  // try {
+  //   await Purchases.configure({ apiKey: REVENUECAT_API_KEY });
+  //   if (__DEV__) {
+  //     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+  //   }
+  //   if (customerInfoListenerRemove) {
+  //     customerInfoListenerRemove();
+  //     customerInfoListenerRemove = null;
+  //   }
+  //   customerInfoListenerRemove = Purchases.addCustomerInfoUpdateListener(
+  //     (customerInfo) => { syncProStatus(customerInfo); }
+  //   );
+  //   const customerInfo = await Purchases.getCustomerInfo();
+  //   syncProStatus(customerInfo);
+  // } catch (error) {
+  //   console.error('[RevenueCat] Initialization error:', error);
+  // }
 };
 
 /**
@@ -84,42 +76,25 @@ export const getOfferings = async (): Promise<{
   };
   error?: unknown;
 }> => {
-  try {
-    const offerings = await Purchases.getOfferings();
-    return {
-      success: true,
-      data: {
-        current: offerings.current,
-        all: offerings.all,
-      },
-    };
-  } catch (error) {
-    console.error('[RevenueCat] Get offerings error:', error);
-    return { success: false, error };
-  }
+  // const offerings = await Purchases.getOfferings();
+  // return { success: true, data: { current: offerings.current, all: offerings.all } };
+  return { success: false };
 };
 
 /**
  * Purchase a package
  */
 export const purchasePackage = async (
-  packageToPurchase: PurchasesPackage
+  _packageToPurchase: PurchasesPackage
 ): Promise<{
   success: boolean;
   data?: CustomerInfo;
   cancelled?: boolean;
   error?: unknown;
 }> => {
-  try {
-    const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
-    return { success: true, data: customerInfo };
-  } catch (error: any) {
-    if (error?.userCancelled) {
-      return { success: false, cancelled: true };
-    }
-    console.error('[RevenueCat] Purchase error:', error);
-    return { success: false, error };
-  }
+  // const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+  // return { success: true, data: customerInfo };
+  return { success: false };
 };
 
 /**
@@ -130,13 +105,9 @@ export const restorePurchases = async (): Promise<{
   data?: CustomerInfo;
   error?: unknown;
 }> => {
-  try {
-    const customerInfo = await Purchases.restorePurchases();
-    return { success: true, data: customerInfo };
-  } catch (error) {
-    console.error('[RevenueCat] Restore purchases error:', error);
-    return { success: false, error };
-  }
+  // const customerInfo = await Purchases.restorePurchases();
+  // return { success: true, data: customerInfo };
+  return { success: false };
 };
 
 /**
@@ -147,13 +118,9 @@ export const getCustomerInfo = async (): Promise<{
   data?: CustomerInfo;
   error?: unknown;
 }> => {
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    return { success: true, data: customerInfo };
-  } catch (error) {
-    console.error('[RevenueCat] Get customer info error:', error);
-    return { success: false, error };
-  }
+  // const customerInfo = await Purchases.getCustomerInfo();
+  // return { success: true, data: customerInfo };
+  return { success: false };
 };
 
 /**
@@ -164,14 +131,10 @@ export const checkPremiumStatus = async (): Promise<{
   isPro: boolean;
   error?: unknown;
 }> => {
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    const isPro = !!customerInfo.entitlements.active[ENTITLEMENT_ID];
-    return { success: true, isPro };
-  } catch (error) {
-    console.error('[RevenueCat] Check premium status error:', error);
-    return { success: false, isPro: false, error };
-  }
+  // const customerInfo = await Purchases.getCustomerInfo();
+  // const isPro = !!customerInfo.entitlements.active[ENTITLEMENT_ID];
+  // return { success: true, isPro };
+  return { success: false, isPro: false };
 };
 
 /**
@@ -183,18 +146,14 @@ export const hasPlantusProEntitlement = (customerInfo: CustomerInfo): boolean =>
 /**
  * Identify user with RevenueCat (call after login for unified subscription across devices)
  */
-export const identifyUser = async (userId: string): Promise<{
+export const identifyUser = async (_userId: string): Promise<{
   success: boolean;
   data?: CustomerInfo;
   error?: unknown;
 }> => {
-  try {
-    const { customerInfo } = await Purchases.logIn(userId);
-    return { success: true, data: customerInfo };
-  } catch (error) {
-    console.error('[RevenueCat] Identify user error:', error);
-    return { success: false, error };
-  }
+  // const { customerInfo } = await Purchases.logIn(userId);
+  // return { success: true, data: customerInfo };
+  return { success: false };
 };
 
 /**
@@ -205,11 +164,7 @@ export const logOutUser = async (): Promise<{
   data?: CustomerInfo;
   error?: unknown;
 }> => {
-  try {
-    const customerInfo = await Purchases.logOut();
-    return { success: true, data: customerInfo };
-  } catch (error) {
-    console.error('[RevenueCat] Logout user error:', error);
-    return { success: false, error };
-  }
+  // const customerInfo = await Purchases.logOut();
+  // return { success: true, data: customerInfo };
+  return { success: false };
 };

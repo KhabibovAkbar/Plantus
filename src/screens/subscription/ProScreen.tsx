@@ -1,95 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Linking,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  X,
-  Leaf,
-  Check,
-  CaretLeft,
-  CaretRight,
-  Crown,
-} from 'phosphor-react-native';
-import { PurchasesPackage } from 'react-native-purchases';
-
 import { COLORS } from '../../utils/theme';
-import { useTheme } from '../../hooks';
-import { useAppStore } from '../../store/appStore';
-import {
-  getOfferings,
-  purchasePackage,
-  restorePurchases,
-  checkPremiumStatus,
-} from '../../services/revenueCat';
-import BeforeAfterSlider from '../../components/BeforeAfterSlider';
 
-const { width: SW } = Dimensions.get('window');
-
-const BEFORE_IMG = require('../../../assets/images/before_plantus.png');
-const AFTER_IMG = require('../../../assets/images/after_plantus.png');
+// import { useState, useEffect } from 'react';
+// import { Text, TouchableOpacity, ActivityIndicator, Alert, Dimensions, Linking } from 'react-native';
+// import { useNavigation } from '@react-navigation/native';
+// import { X, Leaf, Check, CaretLeft, CaretRight, Crown } from 'phosphor-react-native';
+// import { PurchasesPackage } from 'react-native-purchases';
+// import { COLORS } from '../../utils/theme';
+// import { useTheme } from '../../hooks';
+// import { useAppStore } from '../../store/appStore';
+// import { getOfferings, purchasePackage, restorePurchases, checkPremiumStatus } from '../../services/revenueCat';
+// import BeforeAfterSlider from '../../components/BeforeAfterSlider';
+// const { width: SW } = Dimensions.get('window');
+// const BEFORE_IMG = require('../../../assets/images/before_plantus.png');
+// const AFTER_IMG = require('../../../assets/images/after_plantus.png');
 
 export default function ProScreen() {
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
-  const { setIsPro, isPro } = useAppStore();
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]} />
+  );
 
-  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(false);
-  const [restoring, setRestoring] = useState(false);
+  // --- commented out (Pro page logic) ---
+  // const navigation = useNavigation();
+  // const { theme } = useTheme();
+  // const { setIsPro, isPro } = useAppStore();
+  // const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  // const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
+  // const [loading, setLoading] = useState(true);
+  // const [purchasing, setPurchasing] = useState(false);
+  // const [restoring, setRestoring] = useState(false);
+  // useEffect(() => { loadOfferings(); }, []);
 
-  useEffect(() => {
-    loadOfferings();
-  }, []);
-
+  /*
   const loadOfferings = async () => {
     try {
       const result = await getOfferings();
-      console.log('[ProScreen] offerings result:', JSON.stringify(result.data?.current?.availablePackages?.map((p: PurchasesPackage) => ({ id: p.identifier, type: p.packageType, price: p.product.priceString })), null, 2));
-      console.log('[ProScreen] all offerings keys:', result.data?.all ? Object.keys(result.data.all) : 'none');
       if (result.success && result.data) {
-        // Collect packages from all offerings, not just current
         let allPkgs: PurchasesPackage[] = [];
         const offerings = result.data;
-
         if (offerings.current?.availablePackages?.length) {
           allPkgs = [...offerings.current.availablePackages];
         }
-
-        // Also check all offerings in case annual is in a different one
         if (offerings.all) {
           Object.values(offerings.all).forEach((offering: any) => {
             if (offering?.availablePackages) {
               offering.availablePackages.forEach((pkg: PurchasesPackage) => {
-                if (!allPkgs.find((p) => p.identifier === pkg.identifier)) {
-                  allPkgs.push(pkg);
-                }
+                if (!allPkgs.find((p) => p.identifier === pkg.identifier)) allPkgs.push(pkg);
               });
             }
           });
         }
-
-        // Sort: ANNUAL first, then MONTHLY, then others
         allPkgs.sort((a, b) => {
           const order: Record<string, number> = { ANNUAL: 0, MONTHLY: 1 };
           return (order[a.packageType] ?? 2) - (order[b.packageType] ?? 2);
         });
-
-        console.log('[ProScreen] all packages found:', allPkgs.map(p => ({ id: p.identifier, type: p.packageType, price: p.product.priceString })));
         setPackages(allPkgs);
-
-        // Default: select ANNUAL (yearly) plan first, fallback to first
         const annual = allPkgs.find((p) => p.packageType === 'ANNUAL');
         setSelectedPackage(annual || allPkgs[0] || null);
       }
@@ -101,10 +69,7 @@ export default function ProScreen() {
   };
 
   const handlePurchase = async () => {
-    if (!selectedPackage) {
-      Alert.alert('Error', 'Please select a plan');
-      return;
-    }
+    if (!selectedPackage) { Alert.alert('Error', 'Please select a plan'); return; }
     setPurchasing(true);
     try {
       const result = await purchasePackage(selectedPackage);
@@ -114,9 +79,7 @@ export default function ProScreen() {
         Alert.alert('Success', 'Thank you for upgrading to Pro!', [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
-      } else if (result.cancelled) {
-        // User cancelled
-      } else {
+      } else if (!result.cancelled) {
         Alert.alert('Error', 'Purchase failed. Please try again.');
       }
     } catch (error) {
@@ -151,7 +114,6 @@ export default function ProScreen() {
   };
 
   const handleClose = () => navigation.goBack();
-
   const isMonthly = selectedPackage?.packageType === 'MONTHLY';
 
   if (isPro) {
@@ -184,17 +146,12 @@ export default function ProScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
-      {/* Close button */}
       <View style={[styles.closeRowAbs, { top: insets.top + 8 }]}>
         <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
           <X size={28} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
-
-      {/* Title */}
       <Text style={styles.title}>Unlock Full Access</Text>
-
-      {/* Before / After Slider - just the images, no labels */}
       <View style={styles.sliderWrap}>
         <BeforeAfterSlider
           beforeImage={BEFORE_IMG}
@@ -219,8 +176,6 @@ export default function ProScreen() {
           )}
         />
       </View>
-
-      {/* Plans */}
       {loading ? (
         <ActivityIndicator size="large" color={COLORS.textSecondary} style={{ marginTop: 20 }} />
       ) : (
@@ -228,7 +183,6 @@ export default function ProScreen() {
           {packages.map((pkg) => {
             const selected = selectedPackage?.identifier === pkg.identifier;
             const annual = pkg.packageType === 'ANNUAL';
-
             return (
               <TouchableOpacity
                 key={pkg.identifier}
@@ -260,46 +214,27 @@ export default function ProScreen() {
           })}
         </View>
       )}
-
-      {/* Spacer to push bottom bar down */}
       <View style={{ flex: 1 }} />
-
-      {/* Bottom CTA */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
-        {/* Payment info */}
         <View style={styles.paymentInfo}>
           <Check size={20} color={COLORS.text} weight="bold" />
           <Text style={styles.paymentText}>
-            {isMonthly
-              ? 'No Payment Due Now'
-              : `You'll be charged today ${selectedPackage?.product.priceString ?? ''}`}
+            {isMonthly ? 'No Payment Due Now' : `You'll be charged today ${selectedPackage?.product.priceString ?? ''}`}
           </Text>
         </View>
-
-        {/* CTA button */}
         <TouchableOpacity
           style={[styles.ctaBtn, purchasing && { opacity: 0.7 }]}
           onPress={handlePurchase}
           disabled={purchasing || !selectedPackage}
           activeOpacity={0.85}
         >
-          {purchasing ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.ctaBtnText}>
-              {isMonthly ? 'Try for $0.00' : 'Continue'}
-            </Text>
+          {purchasing ? <ActivityIndicator color="#fff" /> : (
+            <Text style={styles.ctaBtnText}>{isMonthly ? 'Try for $0.00' : 'Continue'}</Text>
           )}
         </TouchableOpacity>
-
-        {/* Bottom links */}
         <View style={styles.bottomLinks}>
           <TouchableOpacity onPress={handleRestore}>
-            {restoring ? (
-              <ActivityIndicator size="small" color={COLORS.textSecondary} />
-            ) : (
-              <Text style={styles.linkText}>Restore</Text>
-            )}
+            {restoring ? <ActivityIndicator size="small" color={COLORS.textSecondary} /> : <Text style={styles.linkText}>Restore</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://plantus.app/privacy')}>
             <Text style={styles.linkText}>Privacy policy</Text>
@@ -311,6 +246,7 @@ export default function ProScreen() {
       </View>
     </View>
   );
+  */
 }
 
 const styles = StyleSheet.create({
