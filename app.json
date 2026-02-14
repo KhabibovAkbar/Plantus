@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Plantus",
+    "slug": "plantus",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/app_launcher_icon.png",
+    "scheme": "plantus",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash5.gif",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B5E20"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.webnum.plantus",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "We need camera access to identify and diagnose your plants",
+        "NSPhotoLibraryUsageDescription": "We need photo library access to select plant images",
+        "NSLocationWhenInUseUsageDescription": "We need your location to provide local weather information"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/app_launcher_icon.png",
+        "backgroundColor": "#1B5E20"
+      },
+      "package": "com.webnum.plantus",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-location",
+      "expo-camera",
+      "expo-image-picker",
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/app_launcher_icon.png",
+          "color": "#1B5E20"
+        }
+      ]
+    ]
+  }
+}
