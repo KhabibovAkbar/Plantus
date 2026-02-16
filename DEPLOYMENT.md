@@ -43,11 +43,33 @@ npm run submit:ios
 2. ✅ Версию (`version`) нужно менять вручную только когда хотите выпустить новую версию приложения
 3. ✅ Для TestFlight достаточно увеличивать build number (это делается автоматически)
 
+## Правильная команда для EAS Build (важно!)
+
+**Неправильно** (вызовет ошибку):
+```bash
+npx -y eas-cli@latest-eas-build build:internal --platform ios ...
+```
+
+**Правильно** — используйте один из вариантов:
+```bash
+# Локально (рекомендуется):
+npm run deploy:testflight
+
+# Или вручную:
+npx eas-cli@latest build --platform ios --profile production --auto-submit
+```
+
+В триггерах (GitHub Actions, Expo Dashboard) должна быть команда:
+`eas build --platform ios --profile production --auto-submit-with-profile production`
+или просто `npx eas-cli@latest build --platform ios --profile production --auto-submit`
+(без `eas-build`, без `build:internal`).
+
 ## Если возникнут проблемы:
 
-1. Убедитесь, что используете последнюю версию eas-cli (скрипты используют `npx eas-cli@latest`)
+1. Запускайте сборку локально: `npm run deploy:testflight` или `eas build --platform ios --profile production --auto-submit`
 2. Проверьте, что вы авторизованы: `eas login`
 3. Убедитесь, что у вас настроены credentials: `eas credentials`
+4. Если сборку запускает Expo Dashboard или CI — проверьте настройки триггера и замените команду на правильную (см. выше)
 
 ---
 
