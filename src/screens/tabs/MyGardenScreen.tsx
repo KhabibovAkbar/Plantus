@@ -790,7 +790,7 @@ export default function MyGardenScreen() {
       return (
         <View style={styles.emptyState}>
              <Image
-        source={require('../../../assets/reminder.png')}
+        source={require('../../../assets/reminder.webp')}
         style={styles.snapHistoryEmptyImage}
         resizeMode="contain"
       />
