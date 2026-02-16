@@ -1,51 +1,77 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Dimensions,
+  Image,
+  ImageBackground,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS } from '../../utils/theme';
+import {
+  X,
+  Plant,
+  Calendar,
+  Bell,
+  Brain,
+  BookOpen,
+  Check,
+  Crown,
+} from 'phosphor-react-native';
+import type { PurchasesPackage } from 'react-native-purchases';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// import { useState, useEffect } from 'react';
-// import { Text, TouchableOpacity, ActivityIndicator, Alert, Dimensions, Linking } from 'react-native';
-// import { useNavigation } from '@react-navigation/native';
-// import { X, Leaf, Check, CaretLeft, CaretRight, Crown } from 'phosphor-react-native';
-// import { PurchasesPackage } from 'react-native-purchases';
-// import { COLORS } from '../../utils/theme';
-// import { useTheme } from '../../hooks';
-// import { useAppStore } from '../../store/appStore';
-// import { getOfferings, purchasePackage, restorePurchases, checkPremiumStatus } from '../../services/revenueCat';
-// import BeforeAfterSlider from '../../components/BeforeAfterSlider';
-// const { width: SW } = Dimensions.get('window');
-// const BEFORE_IMG = require('../../../assets/images/before_plantus.png');
-// const AFTER_IMG = require('../../../assets/images/after_plantus.png');
+import { COLORS, FONT_SIZES, SPACING, RADIUS } from '../../utils/theme';
+import { useAppStore } from '../../store/appStore';
+import {
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  checkPremiumStatus,
+} from '../../services/revenueCat';
+
+const { width: SW } = Dimensions.get('window');
+const HERO_HEIGHT = 150;
+
+const FEATURES = [
+  { icon: Plant, label: 'Full plant identification' },
+  { icon: Calendar, label: 'Smart care plans' },
+  { icon: Bell, label: 'Gentle smart reminders' },
+  { icon: Brain, label: 'Advanced plant insights' },
+  { icon: BookOpen, label: 'Full plant wiki access' },
+];
 
 export default function ProScreen() {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]} />
-  );
+  const { isPro, setIsPro } = useAppStore();
 
-  // --- commented out (Pro page logic) ---
-  // const navigation = useNavigation();
-  // const { theme } = useTheme();
-  // const { setIsPro, isPro } = useAppStore();
-  // const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  // const [selectedPackage, setSelectedPackage] = useState<PurchasesPackage | null>(null);
-  // const [loading, setLoading] = useState(true);
-  // const [purchasing, setPurchasing] = useState(false);
-  // const [restoring, setRestoring] = useState(false);
-  // useEffect(() => { loadOfferings(); }, []);
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const [selectedPlanKey, setSelectedPlanKey] = useState<'annual' | 'monthly'>('annual');
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
-  /*
+  useEffect(() => {
+    loadOfferings();
+  }, []);
+
   const loadOfferings = async () => {
     try {
       const result = await getOfferings();
       if (result.success && result.data) {
         let allPkgs: PurchasesPackage[] = [];
-        const offerings = result.data;
-        if (offerings.current?.availablePackages?.length) {
-          allPkgs = [...offerings.current.availablePackages];
+        const { current, all } = result.data;
+        if (current?.availablePackages?.length) {
+          allPkgs = [...current.availablePackages];
         }
-        if (offerings.all) {
-          Object.values(offerings.all).forEach((offering: any) => {
+        if (all) {
+          Object.values(all).forEach((offering: any) => {
             if (offering?.availablePackages) {
               offering.availablePackages.forEach((pkg: PurchasesPackage) => {
                 if (!allPkgs.find((p) => p.identifier === pkg.identifier)) allPkgs.push(pkg);
@@ -58,18 +84,19 @@ export default function ProScreen() {
           return (order[a.packageType] ?? 2) - (order[b.packageType] ?? 2);
         });
         setPackages(allPkgs);
-        const annual = allPkgs.find((p) => p.packageType === 'ANNUAL');
-        setSelectedPackage(annual || allPkgs[0] || null);
       }
-    } catch (error) {
-      console.error('Load offerings error:', error);
+    } catch (e) {
+      console.error('Load offerings error:', e);
     } finally {
       setLoading(false);
     }
   };
 
   const handlePurchase = async () => {
-    if (!selectedPackage) { Alert.alert('Error', 'Please select a plan'); return; }
+    if (!selectedPackage) {
+      Alert.alert('Select a plan', 'Please tap Annual or Monthly plan first, then Start trial.');
+      return;
+    }
     setPurchasing(true);
     try {
       const result = await purchasePackage(selectedPackage);
@@ -79,12 +106,18 @@ export default function ProScreen() {
         Alert.alert('Success', 'Thank you for upgrading to Pro!', [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
-      } else if (!result.cancelled) {
-        Alert.alert('Error', 'Purchase failed. Please try again.');
+      } else if (result.cancelled) {
+        // User closed the sheet – no alert
+      } else {
+        const msg = result.error instanceof Error ? result.error.message : (result.error ? String(result.error) : 'Please check your connection and try again.');
+        Alert.alert('Purchase failed', msg);
       }
-    } catch (error) {
-      console.error('Purchase error:', error);
-      Alert.alert('Error', 'An error occurred during purchase');
+    } catch (e) {
+      console.error('Purchase error:', e);
+      Alert.alert(
+        'Error',
+        'Subscription is unavailable. Please check your connection or try again later.'
+      );
     } finally {
       setPurchasing(false);
     }
@@ -94,19 +127,17 @@ export default function ProScreen() {
     setRestoring(true);
     try {
       const result = await restorePurchases();
-      if (result.success) {
-        const statusResult = await checkPremiumStatus();
-        setIsPro(statusResult.isPro);
-        if (statusResult.isPro) {
-          Alert.alert('Success', 'Your purchases have been restored!', [
-            { text: 'OK', onPress: () => navigation.goBack() },
-          ]);
-        } else {
-          Alert.alert('Info', 'No previous purchases found');
-        }
+      const statusResult = await checkPremiumStatus();
+      setIsPro(statusResult.isPro);
+      if (statusResult.isPro) {
+        Alert.alert('Success', 'Your purchases have been restored!', [
+          { text: 'OK', onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Alert.alert('Info', 'No previous purchases found');
       }
-    } catch (error) {
-      console.error('Restore error:', error);
+    } catch (e) {
+      console.error('Restore error:', e);
       Alert.alert('Error', 'Failed to restore purchases');
     } finally {
       setRestoring(false);
@@ -114,19 +145,18 @@ export default function ProScreen() {
   };
 
   const handleClose = () => navigation.goBack();
-  const isMonthly = selectedPackage?.packageType === 'MONTHLY';
 
   if (isPro) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={[styles.closeRowAbs, { top: insets.top + 8 }]}>
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-            <X size={28} color={COLORS.textSecondary} />
+            <X size={24} color={COLORS.text} weight="bold" />
           </TouchableOpacity>
         </View>
         <View style={styles.alreadyProWrap}>
           <View style={styles.proBadgeCircle}>
-            <Leaf size={48} color="#fff" />
+            <Plant size={48} color="#fff" />
           </View>
           <Text style={styles.alreadyProTitle}>You're a Pro!</Text>
           <Text style={styles.alreadyProDesc}>
@@ -140,183 +170,288 @@ export default function ProScreen() {
     );
   }
 
-  const SLIDER_PAD = 12;
-  const sliderW = SW - SLIDER_PAD * 2;
-  const sliderH = sliderW * 0.75;
+  const annualPkg = packages.find((p) => p.packageType === 'ANNUAL' || p.identifier === '$rc_annual');
+  const monthlyPkg = packages.find((p) => p.packageType === 'MONTHLY' || p.identifier === '$rc_monthly');
+
+  // Selected package for purchase (from current plan key)
+  const selectedPackage = selectedPlanKey === 'annual' ? (annualPkg ?? null) : (monthlyPkg ?? null);
+
+  // All prices from RevenueCat product (localized priceString from App Store)
+  const annualPrice = annualPkg?.product?.priceString ?? '—';
+  const annualPerWeek =
+    annualPkg?.product?.price != null
+      ? (annualPkg.product.price / 52).toFixed(2)
+      : '—';
+  const monthlyPrice = monthlyPkg?.product?.priceString ?? '—';
+
+  // Radio: one plan selected by key (works even when offerings haven't loaded)
+  const isAnnualSelected = selectedPlanKey === 'annual';
+  const isMonthlySelected = selectedPlanKey === 'monthly';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+    <View style={styles.container}>
       <View style={[styles.closeRowAbs, { top: insets.top + 8 }]}>
         <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-          <X size={28} color={COLORS.textSecondary} />
+          <X size={24} color={COLORS.text} weight="bold" />
         </TouchableOpacity>
       </View>
-      <Text style={styles.title}>Unlock Full Access</Text>
-      <View style={styles.sliderWrap}>
-        <BeforeAfterSlider
-          beforeImage={BEFORE_IMG}
-          afterImage={AFTER_IMG}
-          width={sliderW}
-          height={sliderH}
-          dividerColor="#fff"
-          dividerWidth={3}
-          handleWidth={48}
-          handleHeight={48}
-          handleBorderRadius={24}
-          handleColor="#fff"
-          initialPosition={0.5}
-          enableLoop
-          loopDuration={2500}
-          edgeDelay={1000}
-          renderHandle={() => (
-            <View style={styles.handleInner}>
-              <CaretLeft size={14} color="#333" weight="bold" />
-              <CaretRight size={14} color="#333" weight="bold" />
+
+      <View style={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
+        {/* Hero: plant photo under status bar (transparent app bar) + Trust image */}
+        <View style={[styles.heroWrap, { height: HERO_HEIGHT + insets.top }]}>
+          <ImageBackground
+            source={require('../../../assets/unsplash_LOXYdaej5eo.png')}
+            style={styles.heroBgImage}
+            resizeMode="cover"
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.6)', '#FFFFFF']}
+              locations={[0, 0.5, 1]}
+              style={styles.heroGradient}
+              pointerEvents="none"
+            />
+            <View style={styles.heroOverlay} />
+            <View style={[styles.trustImageWrap, { paddingTop: insets.top }]}>
+              <Image
+                source={require('../../../assets/Trust.png')}
+                style={styles.trustImage}
+                resizeMode="contain"
+              />
             </View>
+          </ImageBackground>
+        </View>
+
+        <View style={styles.mainBlock}>
+          <Text style={styles.mainTitle} numberOfLines={2}>Care for your plants like a pro gardener</Text>
+
+          <View style={styles.featuresWrap}>
+            {FEATURES.map(({ icon: Icon, label }) => (
+              <View key={label} style={styles.featureRow}>
+                <View style={styles.featureIconWrap}>
+                  <Icon size={20} color={COLORS.text} />
+                </View>
+                <Text style={styles.featureLabel} numberOfLines={1}>{label}</Text>
+              </View>
+            ))}
+          </View>
+
+          {loading ? (
+            <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: 12 }} />
+          ) : (
+          <View style={styles.plansWrap}>
+            <TouchableOpacity
+              style={[styles.planCard, isAnnualSelected && styles.planCardSelected]}
+              onPress={() => setSelectedPlanKey('annual')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.bestBadge}>
+                <Crown size={12} color="#fff" weight="fill" />
+                <Text style={styles.bestBadgeText}>Best value</Text>
+              </View>
+              <View style={styles.planLeft}>
+                <Text style={styles.planName}>Annual Plan</Text>
+                <Text style={styles.planDesc}>
+                  {annualPrice === '—' ? '—' : `${annualPrice} / year (${annualPerWeek === '—' ? '—' : `$${annualPerWeek}`}/week)`}
+                </Text>
+              </View>
+              <View style={[styles.radioOuter, isAnnualSelected && styles.radioSelected]}>
+                {isAnnualSelected && <Check size={18} color="#fff" weight="bold" />}
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.planCard, isMonthlySelected && styles.planCardSelected]}
+              onPress={() => setSelectedPlanKey('monthly')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.planLeft}>
+                <Text style={styles.planName}>Monthly Plan</Text>
+                <Text style={styles.planDesc}>
+                  {monthlyPrice === '—' ? '—' : `3 days free trial, then ${monthlyPrice} / month`}
+                </Text>
+              </View>
+              <View style={[styles.radioOuter, isMonthlySelected && styles.radioSelected]}>
+                {isMonthlySelected && <Check size={18} color="#fff" weight="bold" />}
+              </View>
+            </TouchableOpacity>
+          </View>
           )}
-        />
-      </View>
-      {loading ? (
-        <ActivityIndicator size="large" color={COLORS.textSecondary} style={{ marginTop: 20 }} />
-      ) : (
-        <View style={styles.plansWrap}>
-          {packages.map((pkg) => {
-            const selected = selectedPackage?.identifier === pkg.identifier;
-            const annual = pkg.packageType === 'ANNUAL';
-            return (
-              <TouchableOpacity
-                key={pkg.identifier}
-                style={[styles.planCard, selected && styles.planCardSelected]}
-                onPress={() => setSelectedPackage(pkg)}
-                activeOpacity={0.8}
-              >
-                {annual && (
-                  <View style={styles.bestBadge}>
-                    <Crown size={12} color="#B8860B" weight="fill" />
-                    <Text style={styles.bestBadgeText}>Best value</Text>
-                  </View>
-                )}
-                <View style={styles.planLeft}>
-                  <Text style={styles.planName}>
-                    {annual ? 'YEARLY PLAN' : '3 DAYS FREE TRIAL'}
-                  </Text>
-                  <Text style={styles.planDesc}>
-                    {annual
-                      ? `${pkg.product.priceString}/year (US$${(pkg.product.price / 52).toFixed(2)}/week)`
-                      : `3 days free trial, then ${pkg.product.priceString}/month`}
-                  </Text>
-                </View>
-                <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-                  {selected && <Check size={16} color="#fff" weight="bold" />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
         </View>
-      )}
-      <View style={{ flex: 1 }} />
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
-        <View style={styles.paymentInfo}>
-          <Check size={20} color={COLORS.text} weight="bold" />
-          <Text style={styles.paymentText}>
-            {isMonthly ? 'No Payment Due Now' : `You'll be charged today ${selectedPackage?.product.priceString ?? ''}`}
-          </Text>
-        </View>
+
+        {/* CTA */}
         <TouchableOpacity
           style={[styles.ctaBtn, purchasing && { opacity: 0.7 }]}
           onPress={handlePurchase}
           disabled={purchasing || !selectedPackage}
           activeOpacity={0.85}
         >
-          {purchasing ? <ActivityIndicator color="#fff" /> : (
-            <Text style={styles.ctaBtnText}>{isMonthly ? 'Try for $0.00' : 'Continue'}</Text>
+          {purchasing ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.ctaBtnText}>
+              {selectedPlanKey === 'monthly' ? 'Start my 3-day trial' : 'Start my 7-day trial'}
+            </Text>
           )}
         </TouchableOpacity>
-        <View style={styles.bottomLinks}>
-          <TouchableOpacity onPress={handleRestore}>
-            {restoring ? <ActivityIndicator size="small" color={COLORS.textSecondary} /> : <Text style={styles.linkText}>Restore</Text>}
-          </TouchableOpacity>
+
+        {/* Footer links */}
+        <View style={styles.footerLinks}>
           <TouchableOpacity onPress={() => Linking.openURL('https://plantus.app/privacy-policy/')}>
-            <Text style={styles.linkText}>Privacy policy</Text>
+            <Text style={styles.footerLinkText}>Privacy Policy</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleRestore}>
-            <Text style={styles.linkText}>Restore</Text>
+          <TouchableOpacity onPress={handleRestore} disabled={restoring}>
+            {restoring ? (
+              <ActivityIndicator size="small" color={COLORS.textSecondary} />
+            ) : (
+              <Text style={styles.footerLinkText}>Restore</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://plantus.app/terms-of-use/')}>
+            <Text style={styles.footerLinkText}>Terms of Use</Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
-  */
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   closeRowAbs: {
     position: 'absolute',
-    right: 16,
+    left: SPACING.lg,
     zIndex: 10,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(245,245,246,0.85)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 30,
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  heroWrap: {
+    height: HERO_HEIGHT,
+    width: SW,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroBgImage: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.88)',
+  },
+  heroGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 160,
+    zIndex: 1,
+  },
+  trustImageWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  trustImage: {
+    width: SW * 0.7,
+    maxWidth: 280,
+    height: 90,
+    zIndex: 1,
+  },
+  mainBlock: {
+    flex: 1,
+    minHeight: 0,
+    paddingHorizontal: SPACING.xl,
+    backgroundColor: '#fff',
+  },
+  mainTitle: {
+    fontSize: 24,
     fontWeight: '700',
     color: COLORS.text,
-    textAlign: 'center',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
   },
-  sliderWrap: {
-    marginBottom: 16,
-    paddingVertical: 12,
+  featuresWrap: {
+    gap: SPACING.sm,
+    flexShrink: 0,
   },
-  handleInner: {
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.md,
+  },
+  featureIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.backgroundSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureLabel: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '500',
+    color: COLORS.text,
+    flex: 1,
   },
   plansWrap: {
-    paddingHorizontal: 20,
-    gap: 12,
+    gap: SPACING.md,
+    flexShrink: 0,
+    marginTop: SPACING.lg,
   },
   planCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    padding: 18,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E7E8EA',
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     position: 'relative',
+    minHeight: 68,
   },
   planCardSelected: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 2,
     borderColor: COLORS.primary,
   },
   bestBadge: {
     position: 'absolute',
-    top: -12,
-    left: 18,
+    top: -10,
+    left: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF8DC',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 999,
-    gap: 4,
+    paddingVertical: 4,
+    borderRadius: RADIUS.round,
+    gap: 6,
   },
   bestBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#B8860B',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
   },
   planLeft: {
     flex: 1,
@@ -325,63 +460,51 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: COLORS.text,
-    letterSpacing: 0.3,
   },
   planDesc: {
     fontSize: 13,
     color: COLORS.textSecondary,
-    marginTop: 3,
+    marginTop: 2,
   },
   radioOuter: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 2,
-    borderColor: '#D3D5D9',
+    borderColor: COLORS.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
+    marginLeft: SPACING.md,
   },
-  radioOuterSelected: {
+  radioSelected: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
-  bottomBar: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  paymentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  paymentText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.text,
-  },
   ctaBtn: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 17,
-    borderRadius: 999,
+    marginHorizontal: SPACING.xl,
+    minHeight: 52,
+    paddingVertical: 16,
+    marginBottom: SPACING.sm,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   ctaBtnText: {
-    fontSize: 19,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#fff',
   },
-  bottomLinks: {
+  footerLinks: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    justifyContent: 'space-around',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl,
+    flexShrink: 0,
   },
-  linkText: {
+  footerLinkText: {
     fontSize: 14,
     color: COLORS.textSecondary,
   },
@@ -402,7 +525,7 @@ const styles = StyleSheet.create({
   },
   alreadyProTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: COLORS.text,
     marginBottom: 12,
   },
@@ -417,7 +540,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: 48,
     paddingVertical: 14,
-    borderRadius: 999,
+    borderRadius: RADIUS.round,
   },
   doneBtnText: {
     fontSize: 16,

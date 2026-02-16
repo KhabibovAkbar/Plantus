@@ -80,8 +80,13 @@ export const signOut = async () => {
   return { error };
 };
 
+/** Deep link for password reset – add this URL to Supabase Dashboard → Auth → URL Configuration → Redirect URLs (e.g. plantus://reset-password) */
+const PASSWORD_RESET_REDIRECT = 'plantus://reset-password';
+
 export const resetPassword = async (email: string) => {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: PASSWORD_RESET_REDIRECT,
+  });
   return { data, error };
 };
 

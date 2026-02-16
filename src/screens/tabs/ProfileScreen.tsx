@@ -15,7 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretRight, PencilSimple, ArrowsClockwise, MapPin, Bell, Thermometer, Gear, ShieldCheck, FileText, Star, ChatCircle, SignOut, Sparkle, HeadphonesIcon } from 'phosphor-react-native';
+import { CaretRight, PencilSimple, MapPin, Thermometer, Gear, ShieldCheck, FileText, Star, ChatCircle, SignOut, Sparkle, HeadphonesIcon } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { RootStackParamList } from '../../types';
@@ -84,7 +84,7 @@ export default function ProfileScreen() {
   };
 
   const handlePro = () => {
-    // navigation.navigate('Pro' as never);
+    navigation.navigate('Pro' as never);
   };
 
   const handleManageSubscription = async () => {
@@ -244,7 +244,7 @@ export default function ProfileScreen() {
         <Text style={[styles.settingValue, { color: theme.textSecondary }]}>{item.value}</Text>
       )}
       {item.showArrow && (
-        <CaretRight size={18} color={theme.textTertiary} />
+        <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
       )}
     </TouchableOpacity>
   );
@@ -369,7 +369,7 @@ export default function ProfileScreen() {
                     Manage your subscription
                   </Text>
                 </View>
-                <CaretRight size={20} color={COLORS.textLight} />
+                <CaretRight size={20} color={COLORS.textLight} weight="bold"/>
               </View>
             </LinearGradient>
           </TouchableOpacity>

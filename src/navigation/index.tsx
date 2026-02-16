@@ -1,14 +1,14 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, TouchableOpacity, StyleSheet, Dimensions, Platform, type GestureResponderEvent } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions, Platform, Linking, type GestureResponderEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { House, Camera, Sparkle, User, PlantIcon } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../store/appStore';
-import { getAIChat } from '../services/supabase';
+import { getAIChat, supabase } from '../services/supabase';
 import { triggerHaptic } from '../utils/helpers';
 import { RootStackParamList, BottomTabParamList } from '../types';
 import { COLORS, DARK_COLORS } from '../utils/theme';
@@ -267,12 +267,46 @@ const TabNavigator = () => {
   );
 };
 
+type NavigateFn = (name: keyof RootStackParamList, params?: object) => void;
+
+// Deep link: password reset (plantus://reset-password#access_token=...&refresh_token=...)
+async function handlePasswordResetUrl(url: string, navigate: NavigateFn) {
+  if (!url || !url.includes('reset-password')) return;
+  const hash = url.includes('#') ? url.split('#')[1] : '';
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
+  if (access_token && refresh_token) {
+    try {
+      await supabase.auth.setSession({ access_token, refresh_token });
+      navigate('ResetPassword', {});
+    } catch (e) {
+      console.warn('Reset password deep link setSession:', e);
+    }
+  }
+}
+
 // Main Navigation
 export default function Navigation() {
   const { isLoggedIn } = useAppStore();
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+
+  useEffect(() => {
+    const navigate: NavigateFn = (name, params) => {
+      if (navigationRef.current?.isReady()) {
+        (navigationRef.current as any).navigate(name, params);
+      }
+    };
+    Linking.getInitialURL().then((url) => {
+      if (url) handlePasswordResetUrl(url, navigate);
+    });
+    const sub = Linking.addEventListener('url', ({ url }) => handlePasswordResetUrl(url, navigate));
+    return () => sub.remove();
+  }, []);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -293,12 +327,12 @@ export default function Navigation() {
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="ResetEmail" component={ResetEmailScreen} />
             <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
-            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-            <Stack.Screen name="Success" component={SuccessScreen} />
             <Stack.Screen name="MainTabs" component={TabNavigator} />
           </>
         )}
 
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        <Stack.Screen name="Success" component={SuccessScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="MyGarden" component={MyGardenScreen} />
         <Stack.Screen name="Assistant" component={AssistantScreen} />
@@ -342,11 +376,11 @@ export default function Navigation() {
         <Stack.Screen name="Repotting" component={RepottingScreen} />
 
         {/* Subscription */}
-        {/* <Stack.Screen
+        <Stack.Screen
           name="Pro"
           component={ProScreen}
           // options={{ animation: 'slide_from_bottom' }}
-        /> */}
+        />
 
         {/* Tools */}
         <Stack.Screen name="LightMeter" component={LightMeterScreen} />

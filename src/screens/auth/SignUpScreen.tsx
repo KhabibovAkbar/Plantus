@@ -130,7 +130,7 @@ export default function SignUpScreen() {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <ArrowLeft size={24} color={COLORS.text} />
+              <ArrowLeft size={24} color={COLORS.text} weight="bold" />
             </TouchableOpacity>
           </View>
 

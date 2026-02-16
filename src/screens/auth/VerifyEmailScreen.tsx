@@ -63,7 +63,7 @@ export default function VerifyEmailScreen() {
     setLoading(true);
     try {
       // TODO: Implement actual verification logic
-      navigation.navigate('ResetPassword');
+      navigation.navigate('ResetPassword', {});
     } catch (err) {
       console.error('Verify error:', err);
       showAlert('Error', 'Invalid verification code');
@@ -91,7 +91,7 @@ export default function VerifyEmailScreen() {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <ArrowLeft size={24} color={COLORS.text} />
+            <ArrowLeft size={24} color={COLORS.text} weight="bold" />
           </TouchableOpacity>
         </View>
 

@@ -74,7 +74,7 @@ export default function ResetEmailScreen() {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <ArrowLeft size={24} color={COLORS.text} />
+            <ArrowLeft size={24} color={COLORS.text} weight="bold" />
           </TouchableOpacity>
         </View>
 
@@ -82,7 +82,7 @@ export default function ResetEmailScreen() {
         <View style={styles.content}>
           <Text style={styles.title}>Reset password</Text>
           <Text style={styles.subtitle}>
-            To reset your password please enter your email
+            We'll send a password reset link to your email. Check your inbox and tap the link to set a new password.
           </Text>
 
           {/* Email Input */}
@@ -109,7 +109,7 @@ export default function ResetEmailScreen() {
             {loading ? (
               <ActivityIndicator color={COLORS.textLight} />
             ) : (
-              <Text style={styles.submitButtonText}>Send Code</Text>
+              <Text style={styles.submitButtonText}>Send reset link</Text>
             )}
           </TouchableOpacity>
         </View>

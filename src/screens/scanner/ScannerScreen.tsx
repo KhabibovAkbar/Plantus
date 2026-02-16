@@ -25,7 +25,7 @@ import {
   Image as ImageIcon,
   Camera as CameraIcon,
   CameraRotate,
-  Leaf,
+  Plant,
   WarningCircle,
   Info,
 } from 'phosphor-react-native';
@@ -433,7 +433,7 @@ export default function ScannerScreen() {
             </Text>
 
             <View style={styles.errorImageContainer}>
-              <Leaf size={64} color={theme.primary} />
+              <Plant size={64} color={theme.primary} weight='fill' />
               <View style={styles.errorBadge}>
                 <WarningCircle size={20} color="#FF9800" />
               </View>

@@ -22,7 +22,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Leaf, Plus, PlusCircle, CaretRight, Camera, Info, PencilSimple, Trash, Plant as PlantIcon } from 'phosphor-react-native';
+import { Plus, PlusCircle, CaretRight, Camera, Info, PencilSimple, Trash, Plant as PlantIcon, DotsThreeVertical, BellSlash } from 'phosphor-react-native';
 
 import { RootStackParamList, Plant, Group } from '../../types';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS, PLACEHOLDER_IMAGE } from '../../utils/theme';
@@ -40,7 +40,10 @@ import {
   updateGroup,
   updateGardenPlant,
 } from '../../services/supabase';
+import { removePlantReminders } from '../../services/notifications';
 import { hasTaskDueToday } from '../../utils/helpers';
+
+const CARE_PLAN_KEYS = ['Watering', 'Fertilize', 'Repotting', 'Pruning', 'Humidity', 'Soilcheck'];
 
 const TABS: { key: TabType; label: string }[] = [
   { key: 'garden', label: 'My Garden' },
@@ -186,6 +189,78 @@ export default function MyGardenScreen() {
       Animated.timing(editScale, { toValue: 0, duration: 250, useNativeDriver: true }),
     ]).start(() => setEditVisible(false));
   }, []);
+
+  // Reminder card options bottom sheet
+  const [reminderSheetPlantIdx, setReminderSheetPlantIdx] = useState<number | null>(null);
+  const REMINDER_SHEET_Y = Dimensions.get('window').height;
+  const reminderSheetOverlay = useRef(new Animated.Value(0)).current;
+  const reminderSheetY = useRef(new Animated.Value(REMINDER_SHEET_Y)).current;
+  useEffect(() => {
+    if (reminderSheetPlantIdx !== null) {
+      reminderSheetOverlay.setValue(0);
+      reminderSheetY.setValue(REMINDER_SHEET_Y);
+      Animated.parallel([
+        Animated.timing(reminderSheetOverlay, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.spring(reminderSheetY, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }),
+      ]).start();
+    }
+  }, [reminderSheetPlantIdx]);
+  const closeReminderSheet = useCallback((afterClose?: () => void) => {
+    Animated.parallel([
+      Animated.timing(reminderSheetOverlay, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(reminderSheetY, { toValue: REMINDER_SHEET_Y, duration: 250, useNativeDriver: true }),
+    ]).start(() => {
+      setReminderSheetPlantIdx(null);
+      afterClose?.();
+    });
+  }, []);
+
+  const handleTurnOffAllCareReminders = useCallback(async () => {
+    if (reminderSheetPlantIdx === null) return;
+    const plant = reminderPlants[reminderSheetPlantIdx];
+    if (!plant) return;
+    const fullPlant = plants.find((p) => String(p.id) === plant.id);
+    if (!fullPlant) return;
+
+    const raw = (fullPlant as any).customcareplan ?? (fullPlant as any).careplan;
+    const cp = safeParse(raw);
+    if (!cp || typeof cp !== 'object') {
+      closeReminderSheet();
+      return;
+    }
+
+    const updated = { ...cp };
+    for (const key of CARE_PLAN_KEYS) {
+      const k = key in updated ? key : key.charAt(0).toLowerCase() + key.slice(1);
+      const item = updated[k];
+      if (item && typeof item === 'object') {
+        updated[k] = { ...item, NotificationEnabled: false, notificationEnabled: false };
+      }
+    }
+
+    try {
+      await updateGardenPlant(plant.id, { customcareplan: JSON.stringify(updated) });
+      await removePlantReminders(plant.id);
+      await loadData();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to turn off reminders');
+    }
+    closeReminderSheet();
+  }, [reminderSheetPlantIdx, reminderPlants, plants, closeReminderSheet]);
+
+  const openReminderOptionsConfirm = useCallback(() => {
+    if (reminderSheetPlantIdx === null) return;
+    const plant = reminderPlants[reminderSheetPlantIdx];
+    if (!plant) return;
+    Alert.alert(
+      'Turn off all care reminders',
+      `Disable all notification reminders for "${plant.name}"? You can turn them back on from the plant's care plan.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => {} },
+        { text: 'Turn off', style: 'destructive', onPress: handleTurnOffAllCareReminders },
+      ]
+    );
+  }, [reminderSheetPlantIdx, reminderPlants, handleTurnOffAllCareReminders]);
 
   useFocusEffect(
     useCallback(() => {
@@ -630,7 +705,7 @@ export default function MyGardenScreen() {
           <Text style={[styles.plantLabel, { color: theme.textSecondary }]} numberOfLines={1}>{item.labels[0]}</Text>
         )}
       </View>
-      <CaretRight size={20} color={theme.textTertiary} />
+      <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
     </TouchableOpacity>
   );
 
@@ -669,7 +744,7 @@ export default function MyGardenScreen() {
             {item.created_at ? formatDate(item.created_at) : ''}
           </Text>
         </View>
-        <CaretRight size={20} color={theme.textTertiary} />
+        <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
       </TouchableOpacity>
     </Swipeable>
   );
@@ -728,7 +803,7 @@ export default function MyGardenScreen() {
                     <Text style={[styles.spaceCardName, { color: theme.text }]} numberOfLines={1}>{group.name}</Text>
                     <Text style={[styles.spaceCardCount, { color: theme.textSecondary }]}>{count} {count === 1 ? 'Plant' : 'Plants'}</Text>
                   </View>
-                  <CaretRight size={18} color={theme.textTertiary} />
+                  <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
                 </TouchableOpacity>
               );
             })}
@@ -774,7 +849,7 @@ export default function MyGardenScreen() {
                       {(plant as any).created_at ? formatDate((plant as any).created_at) : ''}
                     </Text>
                   </View>
-                  <CaretRight size={20} color={theme.textTertiary} />
+                  <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
                 </TouchableOpacity>
               </Swipeable>
             ))}
@@ -812,21 +887,29 @@ export default function MyGardenScreen() {
           const completed = plant.tasks.filter((t) => t.status === 'Done').length;
           return (
             <View key={plant.id} style={[styles.reminderCard, { backgroundColor: theme.card }]}>
-              <TouchableOpacity
-                style={[styles.reminderHeader]}
-                activeOpacity={0.7}
-                onPress={() => {
-                  const found = plants.find((p) => String(p.id) === plant.id);
-                  if (found) navigation.navigate('Plant', { plantId: found.id, isGarden: true, snap: found });
-                }}
-              >
-                <Image source={{ uri: plant.image }} style={[styles.reminderImg, { backgroundColor: theme.backgroundTertiary }]} resizeMode="cover" />
-                <View style={styles.reminderInfo}>
-                  <Text style={[styles.reminderName, { color: theme.text }]}>{plant.name}</Text>
-                  <Text style={[styles.reminderProgress, { color: theme.textSecondary }]}>{completed} of {plant.tasks.length} completed</Text>
-                </View>
-                <CaretRight size={18} color={theme.textTertiary} />
-              </TouchableOpacity>
+              <View style={[styles.reminderHeader]}>
+                <TouchableOpacity
+                  style={styles.reminderHeaderTouch}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    const found = plants.find((p) => String(p.id) === plant.id);
+                    if (found) navigation.navigate('Plant', { plantId: found.id, isGarden: true, snap: found });
+                  }}
+                >
+                  <Image source={{ uri: plant.image }} style={[styles.reminderImg, { backgroundColor: theme.backgroundTertiary }]} resizeMode="cover" />
+                  <View style={styles.reminderInfo}>
+                    <Text style={[styles.reminderName, { color: theme.text }]}>{plant.name}</Text>
+                    <Text style={[styles.reminderProgress, { color: theme.textSecondary }]}>{completed} of {plant.tasks.length} completed</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  onPress={() => setReminderSheetPlantIdx(plantIdx)}
+                  style={styles.reminderDotsBtn}
+                >
+                  <DotsThreeVertical size={20} color={theme.textTertiary} weight="bold" />
+                </TouchableOpacity>
+              </View>
               {plant.tasks.map((task, index) => (
                 <TouchableOpacity
                   key={task.key}
@@ -1047,6 +1130,34 @@ export default function MyGardenScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Reminder card options bottom sheet */}
+      <Modal
+        visible={reminderSheetPlantIdx !== null}
+        animationType="none"
+        transparent
+        onRequestClose={() => closeReminderSheet()}
+      >
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={() => closeReminderSheet()}>
+          <Animated.View style={[styles.sheetOverlay, { opacity: reminderSheetOverlay }]} />
+        </TouchableOpacity>
+        <Animated.View style={[styles.sheetWrapper, { transform: [{ translateY: reminderSheetY }] }]} pointerEvents="box-none">
+          <View style={[styles.sheet, { backgroundColor: theme.background }]} onStartShouldSetResponder={() => true}>
+            <View style={[styles.sheetHandle, { backgroundColor: theme.border }]} />
+            <Text style={[styles.sheetTitle, { color: theme.text }]}>Care reminders</Text>
+
+            <TouchableOpacity
+              style={[styles.optionRow, { borderBottomColor: theme.borderLight }]}
+              onPress={openReminderOptionsConfirm}
+              activeOpacity={0.7}
+            >
+              <BellSlash size={22} color={COLORS.error} />
+              <Text style={[styles.optionText, { color: COLORS.error }]}>Turn off all care reminders</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </Modal>
+
       <View style={{ height: 95 }}></View>
     </View>
   );
@@ -1470,6 +1581,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
+  },
+  reminderHeaderTouch: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reminderDotsBtn: {
+    padding: SPACING.xs,
+    marginRight: -SPACING.xs,
   },
   reminderImg: {
     width: 60,

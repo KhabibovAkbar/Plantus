@@ -18,7 +18,7 @@ export default function ReminderScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <ArrowLeft size={24} color={COLORS.text} />
+          <ArrowLeft size={24} color={COLORS.text} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.title}>Reminder</Text>
         <View style={styles.placeholder} />

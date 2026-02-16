@@ -93,7 +93,7 @@ export default function LocationScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>Location</Text>
         <View style={styles.placeholder} />

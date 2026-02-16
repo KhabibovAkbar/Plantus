@@ -132,7 +132,7 @@ export default function AppSettingsScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>App Settings</Text>
         <View style={styles.placeholder} />
@@ -173,7 +173,7 @@ export default function AppSettingsScreen() {
               <Text style={[styles.settingLabel, { color: theme.text }]}>{item.label}</Text>
               <View style={styles.settingValue}>
                 <Text style={[styles.settingValueText, { color: theme.textSecondary }]}>{item.value}</Text>
-                <CaretRight size={18} color={theme.textTertiary} />
+                <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
               </View>
             </TouchableOpacity>
           )

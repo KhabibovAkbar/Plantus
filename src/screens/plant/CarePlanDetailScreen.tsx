@@ -9,6 +9,7 @@ import {
   Dimensions,
   Alert,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,6 +24,7 @@ import { updateGardenPlant, getGardenPlantById } from '../../services/supabase';
 import {
   scheduleNotification,
   requestNotificationPermissions,
+  cancelCareNotificationForPlant,
 } from '../../services/notifications';
 import { SchedulableTriggerInputTypes } from 'expo-notifications';
 
@@ -178,14 +180,25 @@ function WheelPicker({
 }) {
   const scrollRef = useRef<ScrollView>(null);
   const scrollY = useRef(new Animated.Value(selectedIndex * ITEM_H)).current;
+  const isSnappingRef = useRef(false);
 
-  const handleScrollEnd = useCallback((e: any) => {
-    const y = e.nativeEvent.contentOffset.y;
-    const idx = Math.round(y / ITEM_H);
-    const clamped = Math.max(0, Math.min(data.length - 1, idx));
-    onSelect(clamped);
-    scrollRef.current?.scrollTo({ y: clamped * ITEM_H, animated: true });
-  }, [data.length, onSelect]);
+  const handleScrollEnd = useCallback(
+    (e: any) => {
+      if (isSnappingRef.current) return;
+      const y = e.nativeEvent.contentOffset.y;
+      const idx = Math.round(y / ITEM_H);
+      const clamped = Math.max(0, Math.min(data.length - 1, idx));
+      const targetY = clamped * ITEM_H;
+      if (Math.abs(y - targetY) < 1) return;
+      isSnappingRef.current = true;
+      onSelect(clamped);
+      scrollRef.current?.scrollTo({ y: targetY, animated: false });
+      setTimeout(() => {
+        isSnappingRef.current = false;
+      }, 100);
+    },
+    [data.length, onSelect],
+  );
 
   return (
     <View style={wheelStyles.container}>
@@ -193,7 +206,10 @@ function WheelPicker({
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_H}
+        snapToAlignment="start"
         decelerationRate="fast"
+        bounces={false}
+        overScrollMode="never"
         contentOffset={{ x: 0, y: selectedIndex * ITEM_H }}
         onMomentumScrollEnd={handleScrollEnd}
         onScrollEndDrag={handleScrollEnd}
@@ -208,18 +224,18 @@ function WheelPicker({
           const itemCenter = i * ITEM_H;
           const opacity = scrollY.interpolate({
             inputRange: [
-              itemCenter - ITEM_H * 2,
-              itemCenter - ITEM_H,
+              itemCenter - ITEM_H * 1.2,
+              itemCenter - ITEM_H * 0.5,
               itemCenter,
-              itemCenter + ITEM_H,
-              itemCenter + ITEM_H * 2,
+              itemCenter + ITEM_H * 0.5,
+              itemCenter + ITEM_H * 1.2,
             ],
-            outputRange: [0.15, 0.35, 1, 0.35, 0.15],
+            outputRange: [0.2, 0.5, 1, 0.5, 0.2],
             extrapolate: 'clamp',
           });
           const scale = scrollY.interpolate({
-            inputRange: [itemCenter - ITEM_H, itemCenter, itemCenter + ITEM_H],
-            outputRange: [0.85, 1, 0.85],
+            inputRange: [itemCenter - ITEM_H * 0.6, itemCenter, itemCenter + ITEM_H * 0.6],
+            outputRange: [0.92, 1, 0.92],
             extrapolate: 'clamp',
           });
           return (
@@ -257,6 +273,9 @@ export default function CarePlanDetailScreen() {
   const [repeat, setRepeat] = useState(parsed.repeat);
   const [customRepeat, setCustomRepeat] = useState(parsed.customRepeat);
   const [notifyTime, setNotifyTime] = useState(parseTime(careItem));
+  const [notificationEnabled, setNotificationEnabled] = useState(
+    (careItem as any)?.NotificationEnabled !== false && (careItem as any)?.notificationEnabled !== false,
+  );
   const [saving, setSaving] = useState(false);
 
   // ---- Sheet states ----
@@ -358,12 +377,21 @@ export default function CarePlanDetailScreen() {
       if (typeof cp === 'string') { try { cp = JSON.parse(cp); } catch { cp = {}; } }
       if (!cp || Array.isArray(cp)) cp = {};
 
-      cp[careKey] = { Repeat: repeat, Time: notifyTime.getTime(), CustomRepeat: customRepeat };
+      cp[careKey] = {
+        Repeat: repeat,
+        Time: notifyTime.getTime(),
+        CustomRepeat: customRepeat,
+        NotificationEnabled: notificationEnabled,
+      };
 
       await updateGardenPlant(String(plantId), { customcareplan: JSON.stringify(cp) });
 
-      const notifId = await scheduleCareNotification(plantName, careKey, repeat, customRepeat, notifyTime, String(plantId));
-      if (notifId) console.log(`[CarePlan] Notification scheduled: ${careKey} -> ${notifId}`);
+      if (notificationEnabled) {
+        const notifId = await scheduleCareNotification(plantName, careKey, repeat, customRepeat, notifyTime, String(plantId));
+        if (notifId) console.log(`[CarePlan] Notification scheduled: ${careKey} -> ${notifId}`);
+      } else {
+        await cancelCareNotificationForPlant(String(plantId), careKey);
+      }
 
       navigation.goBack();
     } catch (error) {
@@ -393,18 +421,27 @@ export default function CarePlanDetailScreen() {
           <Text style={[styles.rowLabel, { color: theme.text }]}>Plant</Text>
           <Text style={[styles.rowValue, { color: theme.textSecondary }]}>{plantName}</Text>
         </View>
+        <View style={[styles.row, { backgroundColor: theme.card }]}>
+          <Text style={[styles.rowLabel, { color: theme.text }]}>Enable notification</Text>
+          <Switch
+            value={notificationEnabled}
+            onValueChange={setNotificationEnabled}
+            trackColor={{ false: theme.borderLight, true: COLORS.primary + '99' }}
+            thumbColor={notificationEnabled ? COLORS.primary : theme.textTertiary}
+          />
+        </View>
         <TouchableOpacity style={[styles.row, { backgroundColor: theme.card }]} onPress={() => setRemindVisible(true)} activeOpacity={0.7}>
           <Text style={[styles.rowLabel, { color: theme.text }]}>Repeat</Text>
           <View style={styles.rowRight}>
             <Text style={[styles.rowValue, { color: theme.textSecondary }]}>{displayRepeat}</Text>
-            <CaretRight size={18} color={theme.textTertiary} />
+            <CaretRight size={18} color={theme.textTertiary} weight="bold" />
           </View>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.row_end, { backgroundColor: theme.card }]} onPress={() => setNotifyVisible(true)} activeOpacity={0.7}>
           <Text style={[styles.rowLabel, { color: theme.text }]}>Notify</Text>
           <View style={styles.rowRight}>
             <Text style={[styles.rowValue, { color: theme.textSecondary }]}>{displayTime}</Text>
-            <CaretRight size={18} color={theme.textTertiary} />
+            <CaretRight size={18} color={theme.textTertiary} weight="bold" />
           </View>
         </TouchableOpacity>
       </View>
@@ -437,7 +474,7 @@ export default function CarePlanDetailScreen() {
                 {isSelected && <CheckCircle size={24} color={theme.primary} weight="fill" />}
               </View>
               <Text style={[styles.sheetRowText, { color: theme.text }, isSelected && styles.sheetRowTextActive]}>{opt.label}</Text>
-              {opt.label === 'Custom' && <CaretRight size={18} color={theme.textTertiary} style={{ marginLeft: 'auto' }} />}
+              {opt.label === 'Custom' && <CaretRight size={18} color={theme.textTertiary} style={{ marginLeft: 'auto' }} weight="bold" />}
             </TouchableOpacity>
           );
         })}
@@ -557,7 +594,7 @@ const styles = StyleSheet.create({
   pickerRow: { flexDirection: 'row', alignItems: 'center', height: PICKER_H },
 
   // "Every" label
-  everyLabel: { width: 70, height: PICKER_H, alignItems: 'center', justifyContent: 'center' },
+  everyLabel: { width: 70, height: PICKER_H, alignItems: 'center', justifyContent: 'center', marginLeft: SPACING.xxl, marginRight: SPACING.lg },
   everyText: { fontSize: 20, fontWeight: '600', color: COLORS.text },
 
   // Colon

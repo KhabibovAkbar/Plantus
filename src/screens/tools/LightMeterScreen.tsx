@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CaretLeft, Sun, Moon, CloudSun, Lightbulb, Camera } from 'phosphor-react-native';
 import { LightSensor } from 'expo-sensors';
 import { CameraView, Camera as ExpoCamera } from 'expo-camera';
-import { getColors } from 'react-native-image-colors';
 
 import { FONT_SIZES, SPACING } from '../../utils/theme';
 import { useTheme } from '../../hooks';
@@ -142,10 +141,15 @@ export default function LightMeterScreen() {
           base64: false,
         });
         if (!mounted || !photo?.uri) return;
-        const colors = await getColors(photo.uri, { quality: 'low' }) as Record<string, string | undefined>;
+        let hex = '#808080';
+        try {
+          const { getColors } = require('react-native-image-colors');
+          const colors = (await getColors(photo.uri, { quality: 'low' })) as Record<string, string | undefined>;
+          hex = colors.dominant ?? colors.average ?? colors.primary ?? colors.background ?? colors.vibrant ?? colors.muted ?? hex;
+        } catch {
+          // Native module 'ImageColors' may be missing (e.g. after Expo upgrade); use default
+        }
         if (!mounted) return;
-        const hex =
-          colors.dominant ?? colors.average ?? colors.primary ?? colors.background ?? colors.vibrant ?? colors.muted ?? '#808080';
         const lum = hexToLuminance(hex);
         const luxValue = Math.max(MIN_LUX, Math.min(MAX_LUX, luminanceToLux(lum)));
         setLux(luxValue);

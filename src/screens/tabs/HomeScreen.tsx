@@ -14,15 +14,13 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Sun,
-  Leaf,
+  Plant,
   MagnifyingGlass,
-  CaretRight,
   PlusCircle,
   Bell,
   User,
@@ -140,7 +138,7 @@ export default function HomeScreen() {
   };
 
   const handlePro = () => {
-    // navigation.navigate('Pro' as never);
+    navigation.navigate('Pro' as never);
   };
 
   const getArticleTitle = (article: Article) => {
@@ -399,14 +397,6 @@ export default function HomeScreen() {
                   />
                   <View style={styles.articleTitleBlock}>
                     <View style={styles.articleTitleBlockBg} />
-                    <BlurView
-                      intensity={100}
-                      tint="dark"
-                      style={StyleSheet.absoluteFill}
-                      {...(Platform.OS === "android" && {
-                        experimentalBlurMethod: "dimezisBlurView",
-                      })}
-                    />
                     <Text style={styles.articleTitle} numberOfLines={2}>
                       {getArticleTitle(article)}
                     </Text>
@@ -512,7 +502,7 @@ export default function HomeScreen() {
                           { backgroundColor: theme.backgroundTertiary },
                         ]}
                       >
-                        <Leaf size={24} color={COLORS.primary} />
+                        <Plant size={24} color={COLORS.primary} />
                       </View>
                       <View style={styles.searchResultInfo}>
                         <Text

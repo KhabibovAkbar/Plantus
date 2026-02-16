@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CaretLeft,
   CaretRight,
-  Leaf,
+  Plant as PlantIcon,
   DotsThreeVertical,
   PencilSimple,
   Trash,
@@ -338,7 +338,7 @@ export default function GroupScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Leaf size={48} color={theme.textTertiary} />
+      <PlantIcon size={48} color={theme.textTertiary} weight='fill' />
       <Text style={[styles.emptyTitle, { color: theme.text }]}>No plants in this group</Text>
       <Text style={[styles.emptyText, { color: theme.textSecondary }]}>Add plants to this group from your garden</Text>
     </View>
@@ -355,7 +355,7 @@ export default function GroupScreen() {
         <View style={[styles.optionRow, styles.optionRowDisabled, { borderBottomColor: theme.borderLight }]}>
           {icon}
           <Text style={[styles.optionRowText, { color: theme.textTertiary }]}>{label}</Text>
-          <CaretRight size={20} color={theme.textTertiary} />
+          <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
         </View>
       );
     }
@@ -363,7 +363,7 @@ export default function GroupScreen() {
       <TouchableOpacity style={[styles.optionRow, { borderBottomColor: theme.borderLight }]} onPress={onPress} activeOpacity={0.7}>
         {icon}
         <Text style={[styles.optionRowText, { color: theme.text }]}>{label}</Text>
-        <CaretRight size={20} color={theme.textTertiary} />
+        <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
       </TouchableOpacity>
     );
   };
@@ -581,7 +581,7 @@ export default function GroupScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.groupOptionText, { color: theme.text }]}>{g.name}</Text>
-                  <CaretRight size={20} color={theme.textTertiary} />
+                  <CaretRight size={20} color={theme.textTertiary} weight="bold"/>
                 </TouchableOpacity>
               ))
             )}

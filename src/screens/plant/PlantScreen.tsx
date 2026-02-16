@@ -707,7 +707,19 @@ export default function PlantScreen() {
         >
           <View style={[styles.contentArea, { backgroundColor: theme.backgroundSecondary }]}>
             {/* Help card */}
-            <TouchableOpacity style={[styles.helpCard, { backgroundColor: theme.card }]} onPress={() => navigation.navigate('Chat', {})} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={[styles.helpCard, { backgroundColor: theme.card }]}
+              onPress={() => {
+                const plantName = plant?.name || 'this plant';
+                const firstImg = Array.isArray(images) && images.length > 0 ? images[0] : undefined;
+                const contextMessage = `I need help with my ${plantName}. Could you give me care tips?`;
+                navigation.navigate('Chat', {
+                  plantImage: firstImg,
+                  plantContextMessage: contextMessage,
+                });
+              }}
+              activeOpacity={0.8}
+            >
               <View style={[styles.helpIcon, { backgroundColor: "transparent" }]}>
                 <Sparkle size={35} color={theme.primary} weight="fill" />
               </View>
@@ -715,7 +727,7 @@ export default function PlantScreen() {
                 <Text style={[styles.helpTitle, { color: theme.text }]}>Need more help?</Text>
                 <Text style={[styles.helpSubtitle, { color: theme.textSecondary }]}>Mr Oliver AI Botanist</Text>
               </View>
-              <CaretRight size={22} color={theme.textTertiary} />
+              <CaretRight size={22} color={theme.textTertiary} weight="bold"/>
             </TouchableOpacity>
 
             {/* Labels */}
@@ -756,7 +768,7 @@ export default function PlantScreen() {
                               {entry.item.mainDescription?.replace(/^[^\s]+\s/, '') || ''}
                             </Text>
                           </View>
-                          <CaretRight size={18} color={theme.textTertiary} />
+                          <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
                         </TouchableOpacity>
                       </React.Fragment>
                     ));
@@ -819,7 +831,7 @@ export default function PlantScreen() {
                           <Text style={[styles.careLabel, { color: theme.text }]}>{label}</Text>
                           <View style={styles.careRight}>
                             <Text style={[styles.careRepeat, { color: theme.textSecondary }]}>{repeatText}</Text>
-                            <CaretRight size={18} color={theme.textTertiary} />
+                            <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
                           </View>
                         </TouchableOpacity>
                       </React.Fragment>
@@ -842,7 +854,7 @@ export default function PlantScreen() {
                     </View>
                   )}
                   <Text style={[styles.diseaseTitle, { color: theme.text }]}>{d.title}</Text>
-                  <CaretRight size={18} color={theme.textTertiary} />
+                  <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
                 </TouchableOpacity>
               )) : <Text style={[styles.emptySection, { color: theme.textTertiary }]}>No known diseases</Text>}
             </View>
@@ -961,7 +973,7 @@ export default function PlantScreen() {
                   <FolderOpen size={20} color={theme.primary} />
                 </View>
                 <Text style={[styles.groupModalName, { color: theme.text }]}>{group.name}</Text>
-                <CaretRight size={18} color={theme.textTertiary} />
+                <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
               </TouchableOpacity>
             ))}
           </Animated.View>

@@ -154,6 +154,7 @@ export default function RemindersScreen() {
             cp[careKey] ||
             cp[careKey.charAt(0).toLowerCase() + careKey.slice(1)];
           if (!item) continue;
+          if (item.NotificationEnabled === false || item.notificationEnabled === false) continue;
 
           const repeat = item.Repeat || item.repeat;
           if (!repeat || repeat === "NotSet") continue;
@@ -366,7 +367,7 @@ export default function RemindersScreen() {
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
         >
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]}>Reminders</Text>
         <View style={styles.backBtn} />
@@ -441,7 +442,7 @@ export default function RemindersScreen() {
                       {completed} of {plant.tasks.length} completed
                     </Text>
                   </View>
-                  <CaretRight size={18} color={theme.textTertiary} />
+                  <CaretRight size={18} color={theme.textTertiary} weight="bold"/>
                 </TouchableOpacity>
 
                 {/* Tasks */}

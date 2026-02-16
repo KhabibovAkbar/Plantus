@@ -136,6 +136,7 @@ export const scheduleCareplanNotificationsForPlant = async (
   for (const key of CARE_PLAN_KEYS) {
     const item = cp[key] || cp[key.charAt(0).toLowerCase() + key.slice(1)];
     if (!item) continue;
+    if (item.NotificationEnabled === false || item.notificationEnabled === false) continue;
 
     const rep = item.Repeat || item.repeat;
     if (!rep || rep === 'NotSet') continue;
@@ -201,6 +202,27 @@ export const scheduleCareplanNotificationsForPlant = async (
     }
   }
   return hasError ? { ok: false, error: 'Failed to schedule some reminders' } : { ok: true };
+};
+
+/** Cancel scheduled care notifications for a single plant + care type (e.g. Watering for one plant). */
+export const cancelCareNotificationForPlant = async (
+  plantId: string,
+  careKey: string
+): Promise<{ success: boolean; error?: any }> => {
+  try {
+    const { data: scheduled } = await getScheduledNotifications();
+    if (!scheduled?.length) return { success: true };
+    for (const n of scheduled) {
+      const data = n.content?.data;
+      if (data?.type === 'careplan' && data?.plantId === plantId && data?.careKey === careKey) {
+        await cancelNotification(n.identifier);
+      }
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Cancel care notification error:', error);
+    return { success: false, error };
+  }
 };
 
 /** Setup notifications for all garden plants (e.g. on login). Runs in background. */

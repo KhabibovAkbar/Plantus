@@ -77,13 +77,19 @@ export default function ChatScreen() {
   const { userCollection, darkMode, assistantChatId, setAssistantChatId, setChatCreated } = useAppStore();
   const flatListRef = useRef<FlatList>(null);
 
-  const { chatId: routeChatId } = route.params || {};
+  const { chatId: routeChatId, plantImage: routePlantImage, plantContextMessage: routePlantContextMessage } = route.params || {};
   const effectiveChatId = routeChatId ?? assistantChatId;
   const [messages, setMessages] = useState<SupaMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // ---- Default from Plant screen: 0-index image + short message ----
+  useEffect(() => {
+    if (routePlantImage != null) setSelectedImage(routePlantImage);
+    if (routePlantContextMessage != null && routePlantContextMessage.trim() !== '') setInputText(routePlantContextMessage.trim());
+  }, [routePlantImage, routePlantContextMessage]);
 
   // ---- Load chat (bitta chat: route yoki store dan id) ----
   useEffect(() => {
@@ -279,7 +285,7 @@ export default function ChatScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.borderLight }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Mr Oliver</Text>
@@ -347,7 +353,7 @@ export default function ChatScreen() {
 
         {/* Suggestion chips */}
         {!loading && userMessageCount === 0 && !sending && (
-          <View style={[styles.suggestionsWrap, {backgroundColor: theme.backgroundSecondary}]}>
+          <View style={[styles.suggestionsWrap, { backgroundColor: theme.backgroundSecondary }, selectedImage && styles.suggestionsWrapWithImage]}>
             {INITIAL_SUGGESTIONS.map((s, i) => (
               <TouchableOpacity
                 key={i}
@@ -363,7 +369,7 @@ export default function ChatScreen() {
 
         {/* Context suggestions after first AI response */}
         {!loading && userMessageCount >= 1 && messages.length >= 2 && !sending && messages[messages.length - 1]?.whom === 'ai' && userMessageCount <= 2 && (
-          <View style={[styles.suggestionsWrap, {backgroundColor: theme.backgroundSecondary}]}>
+          <View style={[styles.suggestionsWrap, { backgroundColor: theme.backgroundSecondary }, selectedImage && styles.suggestionsWrapWithImage]}>
             {CONTEXT_SUGGESTIONS.map((s, i) => (
               <TouchableOpacity
                 key={i}
@@ -509,6 +515,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingBottom: 8,
     gap: 8,
+  },
+  suggestionsWrapWithImage: {
+    paddingLeft: SPACING.lg + 72 + 12,
   },
   suggestionChip: {
     backgroundColor: '#fff',

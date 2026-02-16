@@ -31,7 +31,7 @@ export default function WateringScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <ArrowLeft size={24} color={COLORS.text} />
+          <ArrowLeft size={24} color={COLORS.text} weight="bold" />
         </TouchableOpacity>
         <Text style={styles.title}>Watering Reminder</Text>
         <View style={styles.placeholder} />

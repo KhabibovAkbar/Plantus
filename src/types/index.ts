@@ -267,7 +267,7 @@ export type RootStackParamList = {
   Pro: { isFirstStep?: boolean };
 
   // Chat screens
-  Chat: { chatId?: string };
+  Chat: { chatId?: string; plantImage?: string; plantContextMessage?: string };
   ChatProfile: undefined;
 
   // Scanner info

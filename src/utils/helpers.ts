@@ -34,6 +34,7 @@ export function hasTaskDueToday(customCarePlan: Record<string, any> | null, care
   const careData =
     customCarePlan[careKey] || customCarePlan[careKey.charAt(0).toLowerCase() + careKey.slice(1)];
   if (!careData) return false;
+  if (careData.NotificationEnabled === false || careData.notificationEnabled === false) return false;
 
   const timeValue = careData.Time ?? careData.time;
   if (timeValue == null) return false;
