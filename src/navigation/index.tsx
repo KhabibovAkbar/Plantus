@@ -64,8 +64,6 @@ import ChatProfileScreen from '../screens/chat/ChatProfileScreen';
 import LightMeterScreen from '../screens/tools/LightMeterScreen';
 
 // Legal Screens
-import PrivacyPolicyScreen from '../screens/legal/PrivacyPolicyScreen';
-import TermsUseScreen from '../screens/legal/TermsUseScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -106,7 +104,7 @@ const tabBarBgStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: Platform.OS === 'android' ? 4 : 8,
   },
   svg: {
     position: 'absolute',
@@ -177,11 +175,15 @@ const TabNavigator = () => {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarInactiveTintColor: Platform.OS === 'android' ? (darkMode ? '#9E9E9E' : '#5D5D5D') : theme.textSecondary,
         tabBarStyle: {
           backgroundColor: 'transparent',
           borderTopWidth: 0,
-          elevation: 1,
+          elevation: Platform.OS === 'android' ? 4 : 0,
+          shadowColor: Platform.OS === 'ios' ? '#000' : undefined,
+          shadowOffset: Platform.OS === 'ios' ? { width: 0, height: -2 } : undefined,
+          shadowOpacity: Platform.OS === 'ios' ? 0.08 : undefined,
+          shadowRadius: Platform.OS === 'ios' ? 8 : undefined,
           height: 111,
           paddingTop: 24,
           paddingBottom: insets.bottom,
@@ -191,6 +193,10 @@ const TabNavigator = () => {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginTop: Platform.OS === 'android' ? 0 : 4,
+        },
+        tabBarItemStyle: {
+          paddingTop: Platform.OS === 'android' ? 2 : 0,
         },
         tabBarIcon: ({ focused, color }) => {
           switch (route.name) {
@@ -349,9 +355,6 @@ export default function Navigation() {
         <Stack.Screen name="Chat" component={ChatScreen} />
         <Stack.Screen name="ChatProfile" component={ChatProfileScreen} />
 
-        {/* Legal */}
-        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-        <Stack.Screen name="TermsUse" component={TermsUseScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

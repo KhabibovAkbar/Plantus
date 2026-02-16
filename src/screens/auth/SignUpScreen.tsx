@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -220,14 +221,14 @@ export default function SignUpScreen() {
               By continuing, you agree to our{' '}
               <Text
                 style={styles.termsLink}
-                onPress={() => navigation.navigate('TermsUse')}
+                onPress={() => Linking.openURL('http://getcalway.com/terms-of-conditions/')}
               >
                 Terms of Service
               </Text>{' '}
               and{'\n'}
               <Text
                 style={styles.termsLink}
-                onPress={() => navigation.navigate('PrivacyPolicy')}
+                onPress={() => Linking.openURL('http://getcalway.com/privacy-policy/')}
               >
                 Privacy Policy
               </Text>

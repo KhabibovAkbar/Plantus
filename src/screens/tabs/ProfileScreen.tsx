@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ImageBackground,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -117,13 +118,13 @@ export default function ProfileScreen() {
     {
       Icon: ShieldCheck,
       title: 'Privacy policy',
-      onPress: () => navigation.navigate('PrivacyPolicy'),
+      onPress: () => Linking.openURL('http://getcalway.com/privacy-policy/'),
       showArrow: true,
     },
     {
       Icon: FileText,
       title: 'Terms of Use',
-      onPress: () => navigation.navigate('TermsUse'),
+      onPress: () => Linking.openURL('http://getcalway.com/terms-of-conditions/'),
       showArrow: true,
     },
     {

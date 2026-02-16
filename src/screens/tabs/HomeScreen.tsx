@@ -630,6 +630,11 @@ const styles = StyleSheet.create({
     height: 210,
     paddingTop: SPACING.lg,
     paddingLeft: SPACING.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   scanCardTextBlock: {
     alignSelf: "flex-start",

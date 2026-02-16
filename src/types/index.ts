@@ -268,10 +268,6 @@ export type RootStackParamList = {
   Chat: { chatId?: string };
   ChatProfile: undefined;
 
-  // Legal screens
-  PrivacyPolicy: undefined;
-  TermsUse: undefined;
-
   // Scanner info
   InfoScanner: undefined;
 

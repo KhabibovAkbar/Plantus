@@ -1,7 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,7 +13,7 @@ import { useAppStore } from './src/store/appStore';
 import { supabase } from './src/services/supabase';
 import { initializeRevenueCat, identifyUser } from './src/services/revenueCat';
 
-const SPLASH_BG = '#1B5E20';
+const SPLASH_BG = '#121212';
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
 SplashScreen.preventAutoHideAsync();
@@ -84,7 +83,7 @@ export default function App() {
         <Image
           source={require('./assets/splash5.gif')}
           style={styles.splashImage}
-          contentFit="contain"
+          resizeMode="cover"
         />
       </View>
     );
