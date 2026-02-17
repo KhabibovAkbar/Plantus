@@ -379,7 +379,7 @@ export default function Navigation() {
         <Stack.Screen
           name="Pro"
           component={ProScreen}
-          // options={{ animation: 'slide_from_bottom' }}
+          options={{ animation: 'slide_from_bottom' }}
         />
 
         {/* Tools */}

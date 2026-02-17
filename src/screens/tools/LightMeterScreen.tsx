@@ -6,37 +6,14 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretLeft, Sun, Moon, CloudSun, Lightbulb, Camera } from 'phosphor-react-native';
+import { CaretLeft, Sun, Moon, CloudSun, Lightbulb } from 'phosphor-react-native';
 import { LightSensor } from 'expo-sensors';
-import { CameraView, Camera as ExpoCamera } from 'expo-camera';
 
 import { FONT_SIZES, SPACING } from '../../utils/theme';
 import { useTheme } from '../../hooks';
-import type { RootStackParamList } from '../../types';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CAMERA_PREVIEW_HEIGHT = 160;
-
-/** Hex "#RRGGBB" -> relative luminance (0–255). */
-function hexToLuminance(hex: string): number {
-  const h = String(hex).replace('#', '').trim();
-  if (h.length !== 6) return 128;
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  if (Number.isNaN(r + g + b)) return 128;
-  return 0.299 * r + 0.587 * g + 0.114 * b;
-}
-
-/** Map camera luminance (0–255) to approximate lux for display. */
-function luminanceToLux(luminance: number): number {
-  const t = Math.min(255, Math.max(0, luminance)) / 255;
-  return Math.round(t * t * 12000);
-}
 
 const MIN_LUX = 0;
 const MAX_LUX = 100000;
@@ -66,12 +43,8 @@ export default function LightMeterScreen() {
   const [lux, setLux] = useState<number>(0);
   const [sensorAvailable, setSensorAvailable] = useState<boolean | null>(null);
   const [initializing, setInitializing] = useState(true);
-  const [cameraAllowed, setCameraAllowed] = useState<boolean | null>(null);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const subscriptionRef = useRef<{ remove: () => void } | null>(null);
   const simIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cameraRef = useRef<CameraView>(null);
-  const captureTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Android: real light sensor
   useEffect(() => {
@@ -126,81 +99,20 @@ export default function LightMeterScreen() {
     };
   }, []);
 
-  // No sensor: try camera-based estimation, else random demo
+  // No sensor: demo simulation only (no camera)
   useEffect(() => {
     if (sensorAvailable === true) return;
     if (initializing) return;
 
-    let mounted = true;
-
-    const runCameraLoop = async () => {
-      if (!cameraRef.current || !mounted) return;
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.3,
-          base64: false,
-        });
-        if (!mounted || !photo?.uri) return;
-        let hex = '#808080';
-        try {
-          const { getColors } = require('react-native-image-colors');
-          const colors = (await getColors(photo.uri, { quality: 'low' })) as Record<string, string | undefined>;
-          hex = colors.dominant ?? colors.average ?? colors.primary ?? colors.background ?? colors.vibrant ?? colors.muted ?? hex;
-        } catch {
-          // Native module 'ImageColors' may be missing (e.g. after Expo upgrade); use default
-        }
-        if (!mounted) return;
-        const lum = hexToLuminance(hex);
-        const luxValue = Math.max(MIN_LUX, Math.min(MAX_LUX, luminanceToLux(lum)));
-        setLux(luxValue);
-      } catch (_) {
-        // ignore single frame errors
-      }
-      if (mounted) scheduleCapture();
-    };
-
-    const scheduleCapture = () => {
-      captureTimeoutRef.current = setTimeout(runCameraLoop, 1200);
-    };
-
-    (async () => {
-      try {
-        const { status } = await ExpoCamera.requestCameraPermissionsAsync();
-        if (!mounted) return;
-        if (status !== 'granted') {
-          setCameraAllowed(false);
-          setCameraError(null);
-          startFallbackSimulation();
-          return;
-        }
-        setCameraAllowed(true);
-        setCameraError(null);
-        setTimeout(() => scheduleCapture(), 800);
-      } catch (e) {
-        if (mounted) {
-          setCameraAllowed(false);
-          setCameraError('Camera not available');
-          startFallbackSimulation();
-        }
-      }
-    })();
-
-    function startFallbackSimulation() {
-      const id = setInterval(() => {
-        setLux((prev) => {
-          if (prev < 600) return prev + 12;
-          return 380 + Math.round(Math.random() * 440);
-        });
-      }, 200);
-      simIntervalRef.current = id;
-    }
+    const id = setInterval(() => {
+      setLux((prev) => {
+        if (prev < 600) return prev + 12;
+        return 380 + Math.round(Math.random() * 440);
+      });
+    }, 200);
+    simIntervalRef.current = id;
 
     return () => {
-      mounted = false;
-      if (captureTimeoutRef.current) {
-        clearTimeout(captureTimeoutRef.current);
-        captureTimeoutRef.current = null;
-      }
       if (simIntervalRef.current) {
         clearInterval(simIntervalRef.current);
         simIntervalRef.current = null;
@@ -238,17 +150,6 @@ export default function LightMeterScreen() {
           </View>
         ) : (
           <>
-            {sensorAvailable === false && cameraAllowed === true && (
-              <View style={styles.cameraWrap}>
-                <CameraView ref={cameraRef} style={styles.cameraPreview} facing="back" />
-                <View style={styles.cameraLabelWrap}>
-                  <Camera size={16} color={theme.textSecondary} />
-                  <Text style={[styles.cameraLabel, { color: theme.textSecondary }]}>
-                    Point at light source for estimate
-                  </Text>
-                </View>
-              </View>
-            )}
             <View
             style={[
               styles.meterCard,
@@ -297,9 +198,7 @@ export default function LightMeterScreen() {
 
             {sensorAvailable === false && (
               <Text style={[styles.demoLabel, { color: theme.textTertiary }]}>
-                {cameraAllowed === true
-                  ? 'Estimated from camera (no light sensor)'
-                  : cameraError || 'Demo — no sensor on this device'}
+                Demo — no light sensor on this device
               </Text>
             )}
           </View>
@@ -328,27 +227,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xl,
     justifyContent: 'center',
-  },
-  cameraWrap: {
-    width: '100%',
-    marginBottom: SPACING.lg,
-    borderRadius: 16,
-    overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  cameraPreview: {
-    width: SCREEN_WIDTH - SPACING.lg * 2,
-    height: CAMERA_PREVIEW_HEIGHT,
-  },
-  cameraLabelWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: SPACING.sm,
-  },
-  cameraLabel: {
-    fontSize: FONT_SIZES.sm,
   },
   meterCard: {
     borderRadius: 20,

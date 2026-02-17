@@ -264,6 +264,13 @@ export default function MyGardenScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setActiveTab('garden');
+      if (tabWidths[0] > 0) {
+        Animated.parallel([
+          Animated.spring(indicatorX, { toValue: tabXs[0], useNativeDriver: false, tension: 68, friction: 12 }),
+          Animated.spring(indicatorW, { toValue: tabWidths[0], useNativeDriver: false, tension: 68, friction: 12 }),
+        ]).start();
+      }
       if (isLoggedIn) {
         loadData();
       } else {

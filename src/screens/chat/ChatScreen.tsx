@@ -151,11 +151,22 @@ export default function ChatScreen() {
   };
 
   // ---- Scroll to end ----
-  const scrollToEnd = () => {
+  const scrollToEnd = (animated = true) => {
     setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
+      flatListRef.current?.scrollToEnd({ animated });
     }, 150);
   };
+
+  // Always open chat with list scrolled to end (after load or on focus)
+  useEffect(() => {
+    if (!loading && messages.length > 0) scrollToEnd(false);
+  }, [loading, messages.length]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!loading && messages.length > 0) scrollToEnd(false);
+    }, [loading, messages.length]),
+  );
 
   // ---- Send message ----
   const handleSend = async (text?: string) => {
@@ -407,7 +418,7 @@ export default function ChatScreen() {
               placeholderTextColor={theme.textSecondary}
               value={inputText}
               onChangeText={setInputText}
-              multiline
+              numberOfLines={1}
               maxLength={2000}
             />
           </View>
@@ -563,14 +574,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F3F5',
     borderRadius: 22,
     marginHorizontal: 8,
-    maxHeight: 100,
+    height: 40,
   },
   input: {
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     fontSize: 15,
     color: COLORS.text,
-    maxHeight: 100,
     height: 40,
     backgroundColor: "transparent",
   },
