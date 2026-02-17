@@ -30,6 +30,7 @@ import {
 } from "../../services/supabase";
 import { setupGardenNotificationsForUser } from "../../services/notifications";
 import { useAppStore } from "../../store/appStore";
+import { useTheme } from "../../hooks";
 import { isValidEmail, showAlert } from "../../utils/helpers";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -57,6 +58,7 @@ export default function SignInScreen() {
     notifications,
     darkMode,
   } = useAppStore();
+  const { theme } = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -123,7 +125,7 @@ export default function SignInScreen() {
 
         if (notifications)
           setupGardenNotificationsForUser(data.user.id).catch(() => {});
-        navigation.navigate("MainTabs");
+        navigation.replace("Pro", { isFirstStep: true });
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -212,7 +214,7 @@ export default function SignInScreen() {
           setSession(data.session);
           if (notifications)
             setupGardenNotificationsForUser(data.user.id).catch(() => {});
-          navigation.navigate("MainTabs");
+          navigation.replace("Pro", { isFirstStep: true });
         }
       }
     } catch (error: any) {
@@ -249,7 +251,7 @@ export default function SignInScreen() {
           setSession(data.session);
           if (notifications)
             setupGardenNotificationsForUser(data.user.id).catch(() => {});
-          navigation.navigate("MainTabs");
+          navigation.replace("Pro", { isFirstStep: true });
         }
       }
     } catch (error: any) {
@@ -267,7 +269,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -283,14 +285,14 @@ export default function SignInScreen() {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <ArrowLeft size={24} color={COLORS.text} weight="bold" />
+              <ArrowLeft size={24} color={theme.text} weight="bold" />
             </TouchableOpacity>
           </View>
 
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Sign In</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: theme.text }]}>Sign In</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               To continue using our app create account first
             </Text>
           </View>
@@ -299,12 +301,16 @@ export default function SignInScreen() {
           <View style={styles.form}>
             {/* Email Input */}
             <View
-              style={[styles.inputWrapper, errors.email && styles.inputError]}
+              style={[
+                styles.inputWrapper,
+                { backgroundColor: theme.backgroundSecondary, borderColor: errors.email ? theme.error : 'transparent' },
+                errors.email && styles.inputError,
+              ]}
             >
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Enter your email"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -313,20 +319,21 @@ export default function SignInScreen() {
               />
             </View>
             {errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
+              <Text style={[styles.errorText, { color: theme.error }]}>{errors.email}</Text>
             )}
 
             {/* Password Input */}
             <View
               style={[
                 styles.inputWrapper,
+                { backgroundColor: theme.backgroundSecondary, borderColor: errors.password ? theme.error : 'transparent' },
                 errors.password && styles.inputError,
               ]}
             >
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -334,7 +341,7 @@ export default function SignInScreen() {
               />
             </View>
             {errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
+              <Text style={[styles.errorText, { color: theme.error }]}>{errors.password}</Text>
             )}
 
             {/* Forgot Password */}
@@ -342,45 +349,45 @@ export default function SignInScreen() {
               style={styles.forgotPassword}
               onPress={handleForgotPassword}
             >
-              <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+              <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>Forgot password?</Text>
             </TouchableOpacity>
 
             {/* Sign In Button */}
             <TouchableOpacity
-              style={[styles.signInButton, loading && styles.buttonDisabled]}
+              style={[styles.signInButton, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
               onPress={handleSignIn}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.textLight} />
+                <ActivityIndicator color={theme.textLight} />
               ) : (
-                <Text style={styles.signInButtonText}>Sign In</Text>
+                <Text style={[styles.signInButtonText, { color: theme.textLight }]}>Sign In</Text>
               )}
             </TouchableOpacity>
 
             {/* Divider */}
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+              <Text style={[styles.dividerText, { color: theme.textSecondary }]}>or</Text>
+              <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
             </View>
 
             {/* Continue with Apple - iOS only */}
             {Platform.OS === "ios" && (
               <TouchableOpacity
-                style={[styles.socialButton, styles.appleButton]}
+                style={[styles.socialButton, styles.appleButton, { backgroundColor: theme.text }]}
                 onPress={handleAppleSignIn}
                 disabled={socialLoading !== null}
               >
                 {socialLoading === "apple" ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={theme.background} />
                 ) : (
                   <>
                     <Image
                       source={darkMode ? require("../../../assets/apple_black.png") : require("../../../assets/apple_white.png")}
                       style={styles.googleIcon}
                     />
-                    <Text style={styles.appleButtonText}>
+                    <Text style={[styles.appleButtonText, { color: theme.background }]}>
                       Continue with Apple
                     </Text>
                   </>
@@ -390,19 +397,19 @@ export default function SignInScreen() {
 
             {/* Continue with Google */}
             <TouchableOpacity
-              style={styles.socialButton}
+              style={[styles.socialButton, { backgroundColor: theme.backgroundSecondary }]}
               onPress={handleGoogleSignIn}
               disabled={socialLoading !== null}
             >
               {socialLoading === "google" ? (
-                <ActivityIndicator color={COLORS.text} />
+                <ActivityIndicator color={theme.text} />
               ) : (
                 <>
                   <Image
                     source={require("../../../assets/google.png")}
                     style={styles.googleIcon}
                   />
-                  <Text style={styles.socialButtonText}>
+                  <Text style={[styles.socialButtonText, { color: theme.text }]}>
                     Continue with Google
                   </Text>
                 </>

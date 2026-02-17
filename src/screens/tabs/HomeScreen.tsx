@@ -50,6 +50,8 @@ export default function HomeScreen() {
   const {
     weather,
     setWeather,
+    city,
+    setCity,
     temperature,
     isLoggedIn,
     isPro,
@@ -78,10 +80,12 @@ export default function HomeScreen() {
           "metric",
         );
         if (weatherResult.success && weatherResult.data) {
+          const cityName = weatherResult.data.location;
           setWeather({
             temp: weatherResult.data.temp,
-            location: weatherResult.data.location,
+            location: cityName,
           });
+          setCity(cityName);
         }
       }
 
@@ -183,7 +187,7 @@ export default function HomeScreen() {
             <Text
               style={[styles.weatherLocation, { color: theme.textSecondary }]}
             >
-              {weather.location}
+              {city || weather.location}
             </Text>
           </View>
         </View>

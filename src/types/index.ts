@@ -265,6 +265,7 @@ export type RootStackParamList = {
 
   // Subscription screens
   Pro: { isFirstStep?: boolean };
+  OneTimeOffer: { fromFirstTime?: boolean };
 
   // Chat screens
   Chat: { chatId?: string; plantImage?: string; plantContextMessage?: string };

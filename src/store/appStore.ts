@@ -26,6 +26,8 @@ const STORAGE_KEYS = {
   VIBRATION: '@plantus_vibration',
   DARK_MODE: '@plantus_dark_mode',
   WEATHER: '@plantus_weather',
+  CITY: '@plantus_city',
+  REMAINING_SCANS: '@plantus_remaining_scans',
 };
 
 // Default reminder configuration
@@ -68,6 +70,7 @@ interface AppState {
   // Location & Weather
   location: Location;
   weather: Weather;
+  city: string;
 
   // Settings
   temperature: TemperatureUnit;
@@ -84,6 +87,7 @@ interface AppState {
   // UI state
   selectedSegment: number;
   isPro: boolean;
+  remainingScans: number;
 
   // Actions
   setUser: (user: SupabaseUser | null) => void;
@@ -97,6 +101,7 @@ interface AppState {
   setChatScrollToEnd: (value: boolean) => void;
   setLocation: (location: Location) => void;
   setWeather: (weather: Weather) => void;
+  setCity: (city: string) => void;
   setTemperature: (unit: TemperatureUnit) => void;
   setLanguage: (lang: Language) => void;
   setNotifications: (value: boolean) => void;
@@ -110,6 +115,8 @@ interface AppState {
   updateRepottingReminder: (updates: Partial<Reminder>) => void;
   setSelectedSegment: (segment: number) => void;
   setIsPro: (value: boolean) => void;
+  setRemainingScans: (value: number) => void;
+  decrementRemainingScans: () => void;
   initializePersistedState: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -127,6 +134,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   chatScrollToEnd: false,
   location: defaultLocation,
   weather: defaultWeather,
+  city: '',
   temperature: 'metric',
   language: 'English',
   notifications: true,
@@ -137,6 +145,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   repottingReminder: { ...defaultReminder },
   selectedSegment: 1,
   isPro: false,
+  remainingScans: 5,
 
   // Actions
   setUser: (user) => set({ user, isLoggedIn: !!user }),
@@ -189,6 +198,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   setWeather: async (weather) => {
     set({ weather });
     await AsyncStorage.setItem(STORAGE_KEYS.WEATHER, JSON.stringify(weather));
+  },
+
+  setCity: async (city) => {
+    set({ city });
+    await AsyncStorage.setItem(STORAGE_KEYS.CITY, city);
   },
 
   setTemperature: async (unit) => {
@@ -274,6 +288,18 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setIsPro: (value) => set({ isPro: value }),
 
+  setRemainingScans: async (value) => {
+    set({ remainingScans: Math.max(0, value) });
+    await AsyncStorage.setItem(STORAGE_KEYS.REMAINING_SCANS, String(Math.max(0, value)));
+  },
+
+  decrementRemainingScans: async () => {
+    const { remainingScans } = get();
+    const next = Math.max(0, remainingScans - 1);
+    set({ remainingScans: next });
+    await AsyncStorage.setItem(STORAGE_KEYS.REMAINING_SCANS, String(next));
+  },
+
   initializePersistedState: async () => {
     try {
       const [
@@ -291,6 +317,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         vibration,
         darkMode,
         weather,
+        city,
+        remainingScans,
       ] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.IS_FIRST_STEP),
         AsyncStorage.getItem(STORAGE_KEYS.CHAT_CREATED),
@@ -306,6 +334,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         AsyncStorage.getItem(STORAGE_KEYS.VIBRATION),
         AsyncStorage.getItem(STORAGE_KEYS.DARK_MODE),
         AsyncStorage.getItem(STORAGE_KEYS.WEATHER),
+        AsyncStorage.getItem(STORAGE_KEYS.CITY),
+        AsyncStorage.getItem(STORAGE_KEYS.REMAINING_SCANS),
       ]);
 
       set({
@@ -331,6 +361,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         vibration: vibration ? JSON.parse(vibration) : true,
         darkMode: darkMode ? JSON.parse(darkMode) : false,
         weather: weather ? JSON.parse(weather) : defaultWeather,
+        city: city ?? '',
+        remainingScans: remainingScans != null && !Number.isNaN(parseInt(remainingScans, 10)) ? parseInt(remainingScans, 10) : 5,
       });
     } catch (error) {
       console.error('Error loading persisted state:', error);

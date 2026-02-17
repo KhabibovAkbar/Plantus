@@ -21,6 +21,7 @@ import { COLORS, FONT_SIZES, SPACING, RADIUS } from '../../utils/theme';
 import { signUpWithEmail } from '../../services/supabase';
 import { setupGardenNotificationsForUser } from '../../services/notifications';
 import { useAppStore } from '../../store/appStore';
+import { useTheme } from '../../hooks';
 import { isValidEmail, showAlert } from '../../utils/helpers';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -29,6 +30,7 @@ export default function SignUpScreen() {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
   const { setUser, setSession, setUserCollection, notifications } = useAppStore();
+  const { theme } = useTheme();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -99,7 +101,7 @@ export default function SignUpScreen() {
           image: null,
         });
         if (notifications) setupGardenNotificationsForUser(data.user.id).catch(() => {});
-        navigation.navigate('MainTabs');
+        navigation.replace('Pro', { isFirstStep: true });
       } else if (data.user && !data.session) {
         navigation.navigate('Success', {
           message: 'Please check your email to confirm your account',
@@ -114,7 +116,7 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -130,14 +132,14 @@ export default function SignUpScreen() {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <ArrowLeft size={24} color={COLORS.text} weight="bold" />
+              <ArrowLeft size={24} color={theme.text} weight="bold" />
             </TouchableOpacity>
           </View>
 
           {/* Title */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Sign Up</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: theme.text }]}>Sign Up</Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               To continue using our app create account first
             </Text>
           </View>
@@ -145,24 +147,24 @@ export default function SignUpScreen() {
           {/* Form */}
           <View style={styles.form}>
             {/* Name Input */}
-            <View style={[styles.inputWrapper, errors.name && styles.inputError]}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: errors.name ? theme.error : 'transparent' }, errors.name && styles.inputError]}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Enter your name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
               />
             </View>
-            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+            {errors.name && <Text style={[styles.errorText, { color: theme.error }]}>{errors.name}</Text>}
 
             {/* Email Input */}
-            <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: errors.email ? theme.error : 'transparent' }, errors.email && styles.inputError]}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Enter your email"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -170,28 +172,28 @@ export default function SignUpScreen() {
                 autoComplete="email"
               />
             </View>
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            {errors.email && <Text style={[styles.errorText, { color: theme.error }]}>{errors.email}</Text>}
 
             {/* Password Input */}
-            <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: errors.password ? theme.error : 'transparent' }, errors.password && styles.inputError]}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            {errors.password && <Text style={[styles.errorText, { color: theme.error }]}>{errors.password}</Text>}
 
             {/* Confirm Password Input */}
-            <View style={[styles.inputWrapper, errors.confirmPassword && styles.inputError]}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: errors.confirmPassword ? theme.error : 'transparent' }, errors.confirmPassword && styles.inputError]}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: theme.text }]}
                 placeholder="Repeat password"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={theme.textSecondary}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry
@@ -199,36 +201,36 @@ export default function SignUpScreen() {
               />
             </View>
             {errors.confirmPassword && (
-              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              <Text style={[styles.errorText, { color: theme.error }]}>{errors.confirmPassword}</Text>
             )}
 
             {/* Sign Up Button */}
             <TouchableOpacity
-              style={[styles.signUpButton, loading && styles.buttonDisabled]}
+              style={[styles.signUpButton, { backgroundColor: theme.primary }, loading && styles.buttonDisabled]}
               onPress={handleSignUp}
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.textLight} />
+                <ActivityIndicator color={theme.textLight} />
               ) : (
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
+                <Text style={[styles.signUpButtonText, { color: theme.textLight }]}>Sign Up</Text>
               )}
             </TouchableOpacity>
           </View>
 
           {/* Terms */}
           <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
+            <Text style={[styles.termsText, { color: theme.textSecondary }]}>
               By continuing, you agree to our{' '}
               <Text
-                style={styles.termsLink}
+                style={[styles.termsLink, { color: theme.primary }]}
                 onPress={() => Linking.openURL('https://plantus.app/terms-of-use/')}
               >
                 Terms of Service
               </Text>{' '}
               and{'\n'}
               <Text
-                style={styles.termsLink}
+                style={[styles.termsLink, { color: theme.primary }]}
                 onPress={() => Linking.openURL('https://plantus.app/privacy-policy/')}
               >
                 Privacy Policy
@@ -244,7 +246,6 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   keyboardView: {
     flex: 1,
@@ -270,36 +271,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.header,
     fontWeight: 'bold',
-    color: COLORS.text,
     marginBottom: SPACING.sm,
   },
   subtitle: {
     fontSize: FONT_SIZES.lg,
-    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   form: {
     flex: 1,
   },
   inputWrapper: {
-    backgroundColor: COLORS.backgroundSecondary,
     borderRadius: RADIUS.round,
     borderWidth: 1,
-    borderColor: 'transparent',
     marginBottom: SPACING.md,
   },
   inputError: {
-    borderColor: COLORS.error,
   },
   input: {
     paddingVertical: 16,
     paddingHorizontal: SPACING.xl,
     fontSize: FONT_SIZES.lg,
-    color: COLORS.text,
   },
   errorText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.error,
     marginTop: -SPACING.sm,
     marginBottom: SPACING.md,
     paddingLeft: SPACING.xl,
@@ -324,12 +318,9 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: FONT_SIZES.sm,
-    color: COLORS.textTertiary,
     textAlign: 'center',
-    lineHeight: 20,
   },
   termsLink: {
-    color: COLORS.primary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

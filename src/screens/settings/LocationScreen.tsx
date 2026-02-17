@@ -15,36 +15,7 @@ import { COLORS, FONT_SIZES, SPACING, RADIUS } from '../../utils/theme';
 import { useTheme } from '../../hooks';
 import { useAppStore } from '../../store/appStore';
 import { Location } from '../../types';
-
-const allCountries: Location[] = [
-  { name: 'Afghanistan', code: 'AFG' },
-  { name: 'Albania', code: 'ALB' },
-  { name: 'Algeria', code: 'DZA' },
-  { name: 'American Samoa', code: 'ASM' },
-  { name: 'Andorra', code: 'AND' },
-  { name: 'Angola', code: 'AGO' },
-  { name: 'Antarctica', code: 'ATA' },
-  { name: 'Antigua and Barbuda', code: 'ATG' },
-  { name: 'Argentina', code: 'ARG' },
-  { name: 'Australia', code: 'AUS' },
-  { name: 'Bahamas', code: 'BHS' },
-  { name: 'Bahrain', code: 'BHR' },
-  { name: 'Bangladesh', code: 'BGD' },
-  { name: 'Brazil', code: 'BRA' },
-  { name: 'Canada', code: 'CAN' },
-  { name: 'China', code: 'CHN' },
-  { name: 'France', code: 'FRA' },
-  { name: 'Germany', code: 'DEU' },
-  { name: 'India', code: 'IND' },
-  { name: 'Italy', code: 'ITA' },
-  { name: 'Japan', code: 'JPN' },
-  { name: 'South Korea', code: 'KOR' },
-  { name: 'Spain', code: 'ESP' },
-  { name: 'Turkey', code: 'TUR' },
-  { name: 'United Kingdom', code: 'GBR' },
-  { name: 'United States', code: 'USA' },
-  { name: 'Uzbekistan', code: 'UZB' },
-];
+import { ALL_COUNTRIES } from '../../constants/countries';
 
 export default function LocationScreen() {
   const navigation = useNavigation();
@@ -54,8 +25,8 @@ export default function LocationScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredCountries = useMemo(() => {
-    if (!searchQuery.trim()) return allCountries;
-    return allCountries.filter((c) =>
+    if (!searchQuery.trim()) return ALL_COUNTRIES;
+    return ALL_COUNTRIES.filter((c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery]);

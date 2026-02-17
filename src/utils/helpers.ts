@@ -107,6 +107,8 @@ export const timeAgo = (date: Date | string): string => {
 };
 
 // Location helpers
+const LOCATION_TIMEOUT_MS = 15000;
+
 export const getCurrentLocation = async (): Promise<{
   success: boolean;
   coords?: { latitude: number; longitude: number };
@@ -114,14 +116,18 @@ export const getCurrentLocation = async (): Promise<{
 }> => {
   try {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    
+
     if (status !== 'granted') {
       return { success: false, error: 'Permission denied' };
     }
 
-    const location = await Location.getCurrentPositionAsync({
+    const locationPromise = Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced,
     });
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
+    );
+    const location = await Promise.race([locationPromise, timeoutPromise]);
 
     return {
       success: true,
@@ -131,8 +137,12 @@ export const getCurrentLocation = async (): Promise<{
       },
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to get location';
     console.error('Get location error:', error);
-    return { success: false, error: 'Failed to get location' };
+    return {
+      success: false,
+      error: message.includes('timed out') ? 'Location request timed out. Please try again.' : 'Failed to get location',
+    };
   }
 };
 

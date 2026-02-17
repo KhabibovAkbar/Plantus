@@ -53,8 +53,9 @@ import WateringScreen from '../screens/settings/WateringScreen';
 import FertilizingScreen from '../screens/settings/FertilizingScreen';
 import RepottingScreen from '../screens/settings/RepottingScreen';
 
-// Subscription Screen
+// Subscription Screens
 import ProScreen from '../screens/subscription/ProScreen';
+import OneTimeOfferScreen from '../screens/subscription/OneTimeOfferScreen';
 
 // Chat Screens
 import ChatScreen from '../screens/chat/ChatScreen';
@@ -379,7 +380,18 @@ export default function Navigation() {
         <Stack.Screen
           name="Pro"
           component={ProScreen}
-          options={{ animation: 'slide_from_bottom' }}
+          options={{ 
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+           }}
+        />
+        <Stack.Screen
+          name="OneTimeOffer"
+          component={OneTimeOfferScreen}
+          options={{ 
+            animation: 'slide_from_bottom',
+            animationDuration: 300,
+           }}
         />
 
         {/* Tools */}

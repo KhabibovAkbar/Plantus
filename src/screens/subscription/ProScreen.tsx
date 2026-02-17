@@ -11,8 +11,10 @@ import {
   Image,
   ImageBackground,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RootStackParamList } from '../../types';
 import {
   X,
   Plant,
@@ -28,6 +30,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { COLORS, FONT_SIZES, SPACING, RADIUS } from '../../utils/theme';
 import { useAppStore } from '../../store/appStore';
+import { useTheme } from '../../hooks';
 import {
   getOfferings,
   purchasePackage,
@@ -46,10 +49,15 @@ const FEATURES = [
   { icon: BookOpen, label: 'Full plant wiki access' },
 ];
 
+const PRO_CLOSE_COUNT_KEY = '@plantus_pro_close_count';
+
 export default function ProScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Pro'>>();
   const insets = useSafeAreaInsets();
   const { isPro, setIsPro } = useAppStore();
+  const { theme, isDark } = useTheme();
+  const isFirstStep = route.params?.isFirstStep ?? false;
 
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [selectedPlanKey, setSelectedPlanKey] = useState<'annual' | 'monthly'>('annual');
@@ -144,26 +152,47 @@ export default function ProScreen() {
     }
   };
 
-  const handleClose = () => navigation.goBack();
+  const handleClose = async () => {
+    if (isPro) {
+      navigation.goBack();
+      return;
+    }
+    if (isFirstStep) {
+      navigation.navigate('OneTimeOffer', { fromFirstTime: true });
+      return;
+    }
+    try {
+      const raw = await AsyncStorage.getItem(PRO_CLOSE_COUNT_KEY);
+      const count = Math.max(0, parseInt(raw || '0', 10)) + 1;
+      await AsyncStorage.setItem(PRO_CLOSE_COUNT_KEY, String(count));
+      if (count % 10 === 0) {
+        navigation.navigate('OneTimeOffer', { fromFirstTime: false });
+      } else {
+        navigation.goBack();
+      }
+    } catch {
+      navigation.goBack();
+    }
+  };
 
   if (isPro) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background }]}>
         <View style={[styles.closeRowAbs, { top: insets.top + 8 }]}>
           <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-            <X size={24} color={COLORS.text} weight="bold" />
+            <X size={24} color={theme.text} weight="bold" />
           </TouchableOpacity>
         </View>
-        <View style={styles.alreadyProWrap}>
+        <View style={[styles.alreadyProWrap, { backgroundColor: theme.background }]}>
           <View style={styles.proBadgeCircle}>
             <Plant size={48} color="#fff" />
           </View>
-          <Text style={styles.alreadyProTitle}>You're a Pro!</Text>
-          <Text style={styles.alreadyProDesc}>
+          <Text style={[styles.alreadyProTitle, { color: theme.text }]}>You're a Pro!</Text>
+          <Text style={[styles.alreadyProDesc, { color: theme.textSecondary }]}>
             You already have access to all premium features. Thank you for your support!
           </Text>
-          <TouchableOpacity style={styles.doneBtn} onPress={handleClose}>
-            <Text style={styles.doneBtnText}>Done</Text>
+          <TouchableOpacity style={[styles.doneBtn, { backgroundColor: theme.primary }]} onPress={handleClose}>
+            <Text style={[styles.doneBtnText, { color: theme.textLight }]}>Done</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -189,10 +218,10 @@ export default function ProScreen() {
   const isMonthlySelected = selectedPlanKey === 'monthly';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.closeRowAbs, { top: insets.top + 8 }]}>
         <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-          <X size={24} color={COLORS.text} weight="bold" />
+          <X size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
       </View>
 
@@ -205,12 +234,12 @@ export default function ProScreen() {
             resizeMode="cover"
           >
             <LinearGradient
-              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.6)', '#FFFFFF']}
+              colors={isDark ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0.5)', theme.background] : ['rgba(255,255,255,0)', 'rgba(255,255,255,0.6)', '#FFFFFF']}
               locations={[0, 0.5, 1]}
               style={styles.heroGradient}
               pointerEvents="none"
             />
-            <View style={styles.heroOverlay} />
+            <View style={[styles.heroOverlay, { backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.88)' }]} />
             <View style={[styles.trustImageWrap, { paddingTop: insets.top }]}>
               <Image
                 source={require('../../../assets/Trust.png')}
@@ -221,16 +250,16 @@ export default function ProScreen() {
           </ImageBackground>
         </View>
 
-        <View style={styles.mainBlock}>
-          <Text style={styles.mainTitle} numberOfLines={2}>Care for your plants like a pro gardener</Text>
+        <View style={[styles.mainBlock, { backgroundColor: theme.background }]}>
+          <Text style={[styles.mainTitle, { color: theme.text }]} numberOfLines={2}>Care for your plants like a pro gardener</Text>
 
           <View style={styles.featuresWrap}>
             {FEATURES.map(({ icon: Icon, label }) => (
               <View key={label} style={styles.featureRow}>
-                <View style={styles.featureIconWrap}>
-                  <Icon size={20} color={COLORS.text} />
+                <View style={[styles.featureIconWrap, { backgroundColor: theme.backgroundSecondary }]}>
+                  <Icon size={20} color={theme.text} />
                 </View>
-                <Text style={styles.featureLabel} numberOfLines={1}>{label}</Text>
+                <Text style={[styles.featureLabel, { color: theme.text }]} numberOfLines={1}>{label}</Text>
               </View>
             ))}
           </View>
@@ -240,7 +269,11 @@ export default function ProScreen() {
           ) : (
           <View style={styles.plansWrap}>
             <TouchableOpacity
-              style={[styles.planCard, isAnnualSelected && styles.planCardSelected]}
+              style={[
+                styles.planCard,
+                { backgroundColor: theme.card, borderColor: theme.borderLight },
+                isAnnualSelected && { ...styles.planCardSelected, backgroundColor: isDark ? theme.backgroundSecondary : '#F0FDF4', borderColor: theme.primary },
+              ]}
               onPress={() => setSelectedPlanKey('annual')}
               activeOpacity={0.85}
             >
@@ -249,28 +282,32 @@ export default function ProScreen() {
                 <Text style={styles.bestBadgeText}>Best value</Text>
               </View>
               <View style={styles.planLeft}>
-                <Text style={styles.planName}>Annual Plan</Text>
-                <Text style={styles.planDesc}>
+                <Text style={[styles.planName, { color: theme.text }]}>Annual Plan</Text>
+                <Text style={[styles.planDesc, { color: theme.textSecondary }]}>
                   {annualPrice === '—' ? '—' : `${annualPrice} / year (${annualPerWeek === '—' ? '—' : `$${annualPerWeek}`}/week)`}
                 </Text>
               </View>
-              <View style={[styles.radioOuter, isAnnualSelected && styles.radioSelected]}>
+              <View style={[styles.radioOuter, { borderColor: theme.borderLight }, isAnnualSelected && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
                 {isAnnualSelected && <Check size={18} color="#fff" weight="bold" />}
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.planCard, isMonthlySelected && styles.planCardSelected]}
+              style={[
+                styles.planCard,
+                { backgroundColor: theme.card, borderColor: theme.borderLight },
+                isMonthlySelected && { ...styles.planCardSelected, backgroundColor: isDark ? theme.backgroundSecondary : '#F0FDF4', borderColor: theme.primary },
+              ]}
               onPress={() => setSelectedPlanKey('monthly')}
               activeOpacity={0.85}
             >
               <View style={styles.planLeft}>
-                <Text style={styles.planName}>Monthly Plan</Text>
-                <Text style={styles.planDesc}>
+                <Text style={[styles.planName, { color: theme.text }]}>Monthly Plan</Text>
+                <Text style={[styles.planDesc, { color: theme.textSecondary }]}>
                   {monthlyPrice === '—' ? '—' : `3 days free trial, then ${monthlyPrice} / month`}
                 </Text>
               </View>
-              <View style={[styles.radioOuter, isMonthlySelected && styles.radioSelected]}>
+              <View style={[styles.radioOuter, { borderColor: theme.borderLight }, isMonthlySelected && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
                 {isMonthlySelected && <Check size={18} color="#fff" weight="bold" />}
               </View>
             </TouchableOpacity>
@@ -280,15 +317,15 @@ export default function ProScreen() {
 
         {/* CTA */}
         <TouchableOpacity
-          style={[styles.ctaBtn, purchasing && { opacity: 0.7 }]}
+          style={[styles.ctaBtn, { backgroundColor: theme.primary }, purchasing && { opacity: 0.7 }]}
           onPress={handlePurchase}
           disabled={purchasing || !selectedPackage}
           activeOpacity={0.85}
         >
           {purchasing ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.textLight} />
           ) : (
-            <Text style={styles.ctaBtnText}>
+            <Text style={[styles.ctaBtnText, { color: theme.textLight }]}>
               {selectedPlanKey === 'monthly' ? 'Start my 3-day trial' : 'Start my 7-day trial'}
             </Text>
           )}
@@ -297,17 +334,17 @@ export default function ProScreen() {
         {/* Footer links */}
         <View style={styles.footerLinks}>
           <TouchableOpacity onPress={() => Linking.openURL('https://plantus.app/privacy-policy/')}>
-            <Text style={styles.footerLinkText}>Privacy Policy</Text>
+            <Text style={[styles.footerLinkText, { color: theme.textSecondary }]}>Privacy Policy</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleRestore} disabled={restoring}>
             {restoring ? (
-              <ActivityIndicator size="small" color={COLORS.textSecondary} />
+              <ActivityIndicator size="small" color={theme.textSecondary} />
             ) : (
-              <Text style={styles.footerLinkText}>Restore</Text>
+              <Text style={[styles.footerLinkText, { color: theme.textSecondary }]}>Restore</Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://plantus.app/terms-of-use/')}>
-            <Text style={styles.footerLinkText}>Terms of Use</Text>
+            <Text style={[styles.footerLinkText, { color: theme.textSecondary }]}>Terms of Use</Text>
           </TouchableOpacity>
         </View>
       </View>

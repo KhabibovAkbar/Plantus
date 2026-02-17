@@ -56,7 +56,7 @@ export default function ScannerScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const insets = useSafeAreaInsets();
-  const { userCollection, vibration } = useAppStore();
+  const { userCollection, vibration, isPro, remainingScans, decrementRemainingScans } = useAppStore();
   const theme = DARK_COLORS; // Scanner faqat dark mode
 
   const cameraRef = useRef<CameraView>(null);
@@ -173,6 +173,17 @@ export default function ScannerScreen() {
 
   const handleCapture = async () => {
     if (!cameraRef.current) return;
+    if (!isPro && remainingScans <= 0) {
+      Alert.alert(
+        'No scans left',
+        'Get more scans to continue identifying plants.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Get more', onPress: () => navigation.navigate('Pro' as never) },
+        ]
+      );
+      return;
+    }
     triggerHaptic(vibration);
 
     try {
@@ -195,6 +206,17 @@ export default function ScannerScreen() {
   };
 
   const handlePickImage = async () => {
+    if (!isPro && remainingScans <= 0) {
+      Alert.alert(
+        'No scans left',
+        'Get more scans to continue identifying plants.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Get more', onPress: () => navigation.navigate('Pro' as never) },
+        ]
+      );
+      return;
+    }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -231,6 +253,8 @@ export default function ScannerScreen() {
         setLoading(false);
         return;
       }
+
+      if (!isPro) await decrementRemainingScans();
 
       const plantData = result.data;
 
@@ -332,7 +356,23 @@ export default function ScannerScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Camera: 3:4, vertikal to‘ldiradi (top bar dan mode selector gacha), borderRadius 24 */}
+      {/* Remaining scans bar – above camera, only for non‑Pro */}
+      {!isPro && (
+        <View style={[styles.scansBarContainer, { backgroundColor: theme.backgroundTertiary }]}>
+          <Text style={[styles.scansBarText, { color: theme.text }]}>
+            Remaining scans: {remainingScans}
+          </Text>
+          <TouchableOpacity
+            style={styles.scansBarButton}
+            onPress={() => navigation.navigate('Pro' as never)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.scansBarButtonText}>Get more</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Camera: 3:4, vertikal to'ldiradi (top bar dan mode selector gacha), borderRadius 24 */}
       <View
         style={styles.cameraWrapper}
         onLayout={(e) => setCameraAreaHeight(e.nativeEvent.layout.height)}
@@ -530,6 +570,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+    position: 'relative',
+  },
+  scansBarContainer: {
+    width: '92%',
+    position: 'absolute',
+    zIndex: 100,
+    left: '4%',
+    top: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.round,
+  },
+  scansBarText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+  },
+  scansBarButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.round,
+  },
+  scansBarButtonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '700',
+    color: '#18191C',
   },
   permissionContainer: {
     flex: 1,

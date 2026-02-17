@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Image, StyleSheet, Dimensions, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -12,11 +12,23 @@ import Navigation from './src/navigation';
 import { useAppStore } from './src/store/appStore';
 import { supabase } from './src/services/supabase';
 import { initializeRevenueCat, identifyUser } from './src/services/revenueCat';
+import { APP_CONFIG } from './src/config/app';
+import { openAppStore } from './src/utils/helpers';
+import { shouldForceUpdate } from './src/utils/versionCheck';
 
 const SPLASH_BG = '#121212';
 const { width: WINDOW_WIDTH, height: WINDOW_HEIGHT } = Dimensions.get('window');
 
 SplashScreen.preventAutoHideAsync();
+
+function showForceUpdateDialog() {
+  Alert.alert(
+    'Update required',
+    'A new version is available. Please update the app to continue.',
+    [{ text: 'Update', onPress: openAppStore }],
+    { cancelable: false }
+  );
+}
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -69,6 +81,20 @@ export default function App() {
       if (showAppTimeout.current) clearTimeout(showAppTimeout.current);
     };
   }, [appIsReady]);
+
+  useEffect(() => {
+    if (!showApp || !APP_CONFIG.force_update) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const force = await shouldForceUpdate(APP_CONFIG.androidVersionUrl);
+        if (!cancelled && force) showForceUpdateDialog();
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [showApp]);
 
   const onLayoutRootView = useCallback(() => {}, []);
 

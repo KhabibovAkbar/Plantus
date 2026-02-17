@@ -25,29 +25,22 @@ const onboardingData = [
     id: '1',
     title: 'Identify the plant',
     description:
-      'Plants can look alike.\nWe show you the closest matches\nwith confidence levels, not guesses.',
-    image: require('../../../assets/images/Image.png'),
+      'Plants can look alike. We show you the closest matches with confidence levels',
+    image: require('../../../assets/Image1.png'),
   },
   {
     id: '2',
     title: 'Care made simple',
     description:
-      'We break plant care into clear, simple steps\nso you always know exactly what to do next,\nconfidently.',
-    image: require('../../../assets/images/Image2.png'),
+      "We break plant care into clear, simple steps so you always know what to do next",
+    image: require('../../../assets/Image2.png'),
   },
   {
     id: '3',
     title: 'Never forget plant care',
     description:
-      'Get gentle reminders and simple checklists\nright when your plant truly needs attention most,\nnaturally',
-    image: require('../../../assets/images/Image3.png'),
-  },
-  {
-    id: '4',
-    title: 'Never forget plant care',
-    description:
-      'Get gentle reminders and simple checklists\nright when your plant truly needs attention most,\nnaturally',
-    image: require('../../../assets/images/Image3.png'),
+      "Get gentle reminders and simple checklists right when your plant truly needs attention",
+    image: require('../../../assets/Image3.png'),
   },
 ];
 
@@ -179,7 +172,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#D4E7DA",
   },
   header: {
     flexDirection: 'row',
@@ -207,8 +200,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
   },
   imageContainer: {
-    width: width * 0.75,
-    height: height * 0.4,
+    width: width - 32,
+    height: height * 0.5,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.xxl,
@@ -218,14 +211,15 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   title: {
-    fontSize: FONT_SIZES.title,
-    fontWeight: 'bold',
+    fontSize: 30,
+    fontWeight: '600',
     color: COLORS.text,
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
   description: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: 16,
+    fontWeight: '500',
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
@@ -246,7 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#18191C',
     borderRadius: RADIUS.round,
     paddingVertical: 18,
     alignItems: 'center',

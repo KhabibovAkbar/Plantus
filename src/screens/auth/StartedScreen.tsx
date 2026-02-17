@@ -89,7 +89,7 @@ export default function StartedScreen() {
           setSession(data.session);
           if (notifications)
             setupGardenNotificationsForUser(data.user.id).catch(() => {});
-          navigation.navigate("MainTabs");
+          navigation.replace("Pro", { isFirstStep: true });
         }
       }
     } catch (error: any) {
@@ -135,7 +135,7 @@ export default function StartedScreen() {
           setSession(data.session);
           if (notifications)
             setupGardenNotificationsForUser(data.user.id).catch(() => {});
-          navigation.navigate("MainTabs");
+          navigation.replace("Pro", { isFirstStep: true });
         }
       }
     } catch (error: any) {
@@ -222,7 +222,7 @@ export default function StartedScreen() {
           <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.replace("MainTabs")}
+          onPress={() => navigation.replace("Pro", { isFirstStep: true })}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <Text style={[styles.skipText, { color: theme.textSecondary }]}>
@@ -249,7 +249,7 @@ export default function StartedScreen() {
           {/* Continue with Apple - iOS only */}
           {Platform.OS === "ios" && (
             <TouchableOpacity
-              style={[styles.socialButton, styles.appleButton]}
+              style={[styles.socialButton, styles.appleButton, {backgroundColor: theme.black, borderColor: theme.black}]}
               onPress={handleAppleSignIn}
               disabled={loading !== null}
             >
@@ -261,7 +261,7 @@ export default function StartedScreen() {
                     source={darkMode ? require("../../../assets/apple_black.png") : require("../../../assets/apple_white.png")}
                     style={styles.googleIcon}
                   />
-                  <Text style={styles.appleButtonText}>
+                  <Text style={[styles.appleButtonText, {color: theme.textfieldColor}]}>
                     Continue with Apple
                   </Text>
                 </>
@@ -271,7 +271,7 @@ export default function StartedScreen() {
 
           {/* Continue with Google */}
           <TouchableOpacity
-            style={[styles.socialButton, styles.outlineButton]}
+            style={[styles.socialButton, styles.outlineButton, {backgroundColor: theme.accent2, borderColor: theme.accent2}]}
             onPress={handleGoogleSignIn}
             disabled={loading !== null}
           >
@@ -283,7 +283,7 @@ export default function StartedScreen() {
                   source={require("../../../assets/google.png")}
                   style={styles.googleIcon}
                 />
-                <Text style={styles.socialButtonText}>
+                <Text style={[styles.socialButtonText, {color: theme.text}]}>
                   Continue with Google
                 </Text>
               </>
@@ -292,7 +292,7 @@ export default function StartedScreen() {
 
           {/* Continue with Email */}
           <TouchableOpacity
-            style={[styles.socialButton, styles.outlineButton]}
+            style={[styles.socialButton, styles.outlineButton, {backgroundColor: theme.accent2, borderColor: theme.accent2}]}
             onPress={handleEmailSignUp}
             disabled={loading !== null}
           >
@@ -305,7 +305,7 @@ export default function StartedScreen() {
                   color={theme.text}
                   style={styles.buttonIcon}
                 />
-                <Text style={styles.socialButtonText}>Continue with Email</Text>
+                <Text style={[styles.socialButtonText, {color: theme.text}]}>Continue with Email</Text>
               </>
             )}
           </TouchableOpacity>

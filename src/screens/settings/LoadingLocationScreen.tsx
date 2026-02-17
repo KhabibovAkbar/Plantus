@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin } from 'phosphor-react-native';
@@ -9,6 +9,7 @@ import { useTheme } from '../../hooks';
 import { useAppStore } from '../../store/appStore';
 import { fetchLocation as fetchLocationAPI } from '../../services/api';
 import { getCurrentLocation } from '../../utils/helpers';
+import { findCountryByName } from '../../constants/countries';
 
 export default function LoadingLocationScreen() {
   const navigation = useNavigation();
@@ -20,29 +21,59 @@ export default function LoadingLocationScreen() {
     detectLocation();
   }, []);
 
+  const goBack = () => navigation.goBack();
+
   const detectLocation = async () => {
     try {
       const locationResult = await getCurrentLocation();
 
-      if (locationResult.success && locationResult.coords) {
-        const apiResult = await fetchLocationAPI(
-          locationResult.coords.latitude,
-          locationResult.coords.longitude
+      if (!locationResult.success) {
+        Alert.alert(
+          'Location',
+          locationResult.error || 'Could not get your location. Please enable location access and try again.',
+          [{ text: 'OK', onPress: goBack }]
         );
+        return;
+      }
 
-        if (apiResult.success && apiResult.data) {
-          setLocation({
-            name: apiResult.data.country,
-            code: apiResult.data.countryCode,
+      if (!locationResult.coords) {
+        Alert.alert('Location', 'Could not get coordinates.', [{ text: 'OK', onPress: goBack }]);
+        return;
+      }
+
+      const apiResult = await fetchLocationAPI(
+        locationResult.coords.latitude,
+        locationResult.coords.longitude
+      );
+
+      if (!apiResult.success || !apiResult.data) {
+        Alert.alert(
+          'Location',
+          'Could not determine your country. Check your connection and try again.',
+          [{ text: 'OK', onPress: goBack }]
+        );
+        return;
+      }
+
+      const countryName = apiResult.data.country || '';
+      const matched = findCountryByName(countryName);
+      const locationToSet = matched
+        ? { ...matched, lat: locationResult.coords.latitude, lon: locationResult.coords.longitude }
+        : {
+            name: countryName,
+            code: apiResult.data.countryCode || '',
             lat: locationResult.coords.latitude,
             lon: locationResult.coords.longitude,
-          });
-        }
-      }
+          };
+      setLocation(locationToSet);
+      goBack();
     } catch (error) {
       console.error('Detect location error:', error);
-    } finally {
-      navigation.goBack();
+      Alert.alert(
+        'Location',
+        'Something went wrong. Please try again.',
+        [{ text: 'OK', onPress: goBack }]
+      );
     }
   };
 

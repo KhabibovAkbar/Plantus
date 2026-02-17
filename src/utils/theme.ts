@@ -82,6 +82,8 @@ export const COLORS = {
   accent2: '#F5F5F6',
   accent3: '#E7E8EA',
   accent4: '#D3D5D9',
+
+  black: '#18191C',
 };
 
 // Dark theme colors - matching Figma dark mode tokens
@@ -129,6 +131,8 @@ export const DARK_COLORS = {
 
   // Special colors
   ripple: '#12636363',
+
+  black: '#FFFFFF',
 };
 
 // Typography
