@@ -88,6 +88,10 @@ interface AppState {
   selectedSegment: number;
   isPro: boolean;
   remainingScans: number;
+  showProModal: boolean;
+  proModalParams: { isFirstStep?: boolean } | null;
+  showOneTimeOfferModal: boolean;
+  oneTimeOfferParams: { fromFirstTime?: boolean } | null;
 
   // Actions
   setUser: (user: SupabaseUser | null) => void;
