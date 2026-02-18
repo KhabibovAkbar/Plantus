@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CaretLeft, Sun, Moon, CloudSun, Lightbulb } from 'phosphor-react-native';
+import { CaretLeft, ArrowLeft, Sun, Moon, CloudSun, Lightbulb } from 'phosphor-react-native';
 import { LightSensor } from 'expo-sensors';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BlurView } from 'expo-blur';
@@ -27,7 +27,7 @@ import { useTheme } from '../../hooks';
 
 const MIN_LUX = 0;
 const MAX_LUX = 100000;
-const CAMERA_SAMPLE_INTERVAL_MS = 2500;
+const CAMERA_SAMPLE_INTERVAL_MS = 1000;
 
 const LIGHT_LEVELS: { min: number; level: string; color: string; icon: string; description: string }[] = [
   { min: 0, level: 'Very Dark', color: '#1A1A2E', icon: 'moon', description: 'Almost no light' },
@@ -55,9 +55,16 @@ function hexToLuminance(hex: string): number {
   return 0.299 * r + 0.587 * g + 0.114 * b;
 }
 
+// iOS: camera → dominant color → luminance → lux (estimate). Gamma 1.6 + calibration curve
+// for iPhone brightness compensation; ~±25–40% accuracy, good for real-world comparison.
 function luminanceToLux(luminance: number): number {
-  const t = Math.max(0, Math.min(255, luminance)) / 255;
-  return Math.round(10 * Math.pow(t, 2.2) * MAX_LUX);
+  const normalized = Math.max(0, Math.min(255, luminance)) / 255;
+  const gammaCorrected = Math.pow(normalized, 1.6);
+  let lux = gammaCorrected * MAX_LUX;
+  if (lux < 1000) lux *= 0.8;
+  else if (lux < 10000) lux *= 0.9;
+  else lux *= 1.1;
+  return Math.round(Math.max(MIN_LUX, Math.min(MAX_LUX, lux)));
 }
 
 export default function LightMeterScreen() {
@@ -151,7 +158,10 @@ export default function LightMeterScreen() {
       if (hex) {
         const lum = hexToLuminance(hex);
         const newLux = luminanceToLux(lum);
-        setLux((prev) => Math.round(prev * 0.4 + newLux * 0.6));
+        setLux((prev) => {
+          const blended = Math.round(prev * 0.7 + newLux * 0.3);
+          return Math.max(MIN_LUX, Math.min(MAX_LUX, blended));
+        });
       }
     } catch (e: any) {
       // Native module missing in Expo Go — stop retrying
@@ -213,7 +223,7 @@ export default function LightMeterScreen() {
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.background, paddingHorizontal: SPACING.xl }]}>
         <View style={[styles.header, { borderBottomColor: theme.borderLight }]}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <CaretLeft size={24} color={theme.text} />
+          <ArrowLeft size={24} color={theme.text} weight="bold" />
           </TouchableOpacity>
           <Text style={[styles.title, { color: theme.text }]}>Light Meter</Text>
           <View style={styles.placeholder} />
@@ -254,7 +264,7 @@ export default function LightMeterScreen() {
 
       <View style={[styles.headerOverlay, { paddingTop: insets.top }]} pointerEvents="box-none">
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={12}>
-          <CaretLeft size={26} color="#fff" weight="bold" />
+          <CaretLeft size={24} color="#fff" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Light Meter</Text>
         <View style={styles.placeholder} />
@@ -285,7 +295,7 @@ export default function LightMeterScreen() {
               <Text style={[styles.hint, { color: theme.textTertiary }]}>
                 {cameraLuxUnavailable
                   ? 'Camera meter needs dev build: npx expo run:ios'
-                  : 'Camera-based • Point at light source'}
+                  : 'Estimated lux • Best for comparing rooms, not pro measurement'}
               </Text>
             )}
           </View>

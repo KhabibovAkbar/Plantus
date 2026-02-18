@@ -20,7 +20,7 @@ import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navig
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  CaretLeft,
+  ArrowLeft,
   CaretRight,
   Plant as PlantIcon,
   DotsThreeVertical,
@@ -372,7 +372,7 @@ export default function GroupScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.backgroundSecondary }]}>
       <View style={[styles.header, { backgroundColor: theme.backgroundSecondary }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <CaretLeft size={24} color={theme.text} />
+        <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
           {groupName}
