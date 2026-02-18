@@ -17,6 +17,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 import {
   Sun,
   Plant,
@@ -400,7 +401,8 @@ export default function HomeScreen() {
                     resizeMode="cover"
                   />
                   <View style={styles.articleTitleBlock}>
-                    <View style={styles.articleTitleBlockBg} />
+                    <BlurView intensity={50} tint="dark" style={styles.articleTitleBlockBg} />
+                    <View style={styles.articleTitleBlockOverlay} />
                     <Text style={styles.articleTitle} numberOfLines={2}>
                       {getArticleTitle(article)}
                     </Text>
@@ -725,7 +727,10 @@ const styles = StyleSheet.create({
   },
   articleTitleBlockBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  articleTitleBlockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
   articleTitle: {
     fontSize: 16,

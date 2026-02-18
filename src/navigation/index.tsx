@@ -307,8 +307,8 @@ export default function Navigation() {
   }, []);
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
@@ -376,22 +376,24 @@ export default function Navigation() {
         <Stack.Screen name="Fertilizing" component={FertilizingScreen} />
         <Stack.Screen name="Repotting" component={RepottingScreen} />
 
-        {/* Subscription */}
+        {/* Subscription — full-screen modal, slide from bottom, 250ms */}
         <Stack.Screen
           name="Pro"
           component={ProScreen}
-          options={{ 
+          options={{
+            presentation: 'fullScreenModal',
             animation: 'slide_from_bottom',
-            animationDuration: 300,
-           }}
+            animationDuration: 200,
+          }}
         />
         <Stack.Screen
           name="OneTimeOffer"
           component={OneTimeOfferScreen}
-          options={{ 
+          options={{
+            presentation: 'fullScreenModal',
             animation: 'slide_from_bottom',
-            animationDuration: 300,
-           }}
+            animationDuration: 100,
+          }}
         />
 
         {/* Tools */}
@@ -402,7 +404,7 @@ export default function Navigation() {
         <Stack.Screen name="ChatProfile" component={ChatProfileScreen} />
 
       </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
   );
 }
 

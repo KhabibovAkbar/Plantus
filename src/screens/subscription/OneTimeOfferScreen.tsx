@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'phosphor-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { RootStackParamList } from '../../types';
-import { FONT_SIZES, SPACING } from '../../utils/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../utils/theme';
 import { useTheme } from '../../hooks';
 
 type RouteProps = RouteProp<RootStackParamList, 'OneTimeOffer'>;
@@ -29,7 +29,6 @@ export default function OneTimeOfferScreen() {
     if (fromFirstTime) {
       navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } else {
-      // Pro sahifasiga tushmaslik uchun 2 ta ekranni orqaga pop qilamiz (OneTimeOffer + Pro)
       navigation.dispatch(StackActions.pop(2));
     }
   };
@@ -118,13 +117,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.sm,
+    paddingVertical: SPACING.sm,
   },
   closeBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: SPACING.xs,
   },
   scrollContent: {
     paddingHorizontal: SPACING.xl,
@@ -133,110 +129,92 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1a1a1a',
     textAlign: 'center',
-    letterSpacing: 0.5,
-    marginTop: 24,
+    marginTop: SPACING.lg,
   },
   subtitle: {
     fontSize: FONT_SIZES.md,
-    color: '#4a4a4a',
     textAlign: 'center',
-    marginTop: 6,
+    marginTop: SPACING.xs,
   },
   couponWrap: {
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: SPACING.xl,
   },
   ticketImage: {
-    width: '80%',
-    height: 180,
+    width: '100%',
+    height: 160,
   },
   expireTitle: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    color: '#1a1a1a',
     textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
   expireDesc: {
     fontSize: FONT_SIZES.sm,
-    color: '#4a4a4a',
     textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  badgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.3,
-    marginVertical: 8,
-    marginTop: 6,
+    lineHeight: 22,
+    marginBottom: SPACING.xl,
   },
   planCardWrap: {
-    marginTop: 20,
+    marginBottom: SPACING.xl,
     borderRadius: 16,
     overflow: 'hidden',
   },
   planCardBanner: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 2,
+    borderRadius: 16,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
   planCardInner: {
-    width: '100%',
-    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.lg,
+    borderRadius: 14,
   },
   planLeft: {},
   planName: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    color: '#1a1a1a',
   },
   planDesc: {
     fontSize: FONT_SIZES.sm,
-    color: '#4a4a4a',
     marginTop: 2,
   },
   planRight: {
     alignItems: 'flex-end',
   },
   planPrice: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1a1a1a',
+    fontSize: FONT_SIZES.md,
   },
   planPerMonth: {
     fontSize: FONT_SIZES.sm,
-    color: '#4a4a4a',
     marginTop: 2,
   },
   claimBtn: {
-    marginTop: 24,
-    backgroundColor: '#1a1a1a',
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADIUS.round,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: SPACING.xl,
   },
   claimBtnText: {
-    fontSize: 17,
+    fontSize: FONT_SIZES.lg,
     fontWeight: '700',
-    color: '#fff',
   },
   footerLinks: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: SPACING.lg,
   },
   footerLink: {
     fontSize: FONT_SIZES.sm,
-    color: '#888',
   },
 });

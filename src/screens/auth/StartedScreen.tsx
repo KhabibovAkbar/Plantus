@@ -222,7 +222,9 @@ export default function StartedScreen() {
           <ArrowLeft size={24} color={theme.text} weight="bold" />
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => navigation.replace("Pro", { isFirstStep: true })}
+          onPress={() => {
+          navigation.replace("Pro", { isFirstStep: true });
+        }}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <Text style={[styles.skipText, { color: theme.textSecondary }]}>

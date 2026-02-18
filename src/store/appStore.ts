@@ -117,6 +117,8 @@ interface AppState {
   setIsPro: (value: boolean) => void;
   setRemainingScans: (value: number) => void;
   decrementRemainingScans: () => void;
+  setShowProModal: (show: boolean, params?: { isFirstStep?: boolean }) => void;
+  setShowOneTimeOfferModal: (show: boolean, params?: { fromFirstTime?: boolean }) => void;
   initializePersistedState: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -146,6 +148,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedSegment: 1,
   isPro: false,
   remainingScans: 1,
+  showProModal: false,
+  showOneTimeOfferModal: false,
+  proModalParams: null,
+  oneTimeOfferParams: null,
 
   // Actions
   setUser: (user) => set({ user, isLoggedIn: !!user }),
@@ -299,6 +305,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ remainingScans: next });
     await AsyncStorage.setItem(STORAGE_KEYS.REMAINING_SCANS, String(next));
   },
+
+  setShowProModal: (show, params) =>
+    set({
+      showProModal: show,
+      proModalParams: show && params ? { isFirstStep: params.isFirstStep } : null,
+    }),
+
+  setShowOneTimeOfferModal: (show, params) =>
+    set({
+      showOneTimeOfferModal: show,
+      oneTimeOfferParams: show && params ? { fromFirstTime: params.fromFirstTime } : null,
+    }),
 
   initializePersistedState: async () => {
     try {

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +28,7 @@ import { useTheme } from '../../hooks';
 
 const MIN_LUX = 0;
 const MAX_LUX = 100000;
-const CAMERA_SAMPLE_INTERVAL_MS = 1000;
+const CAMERA_SAMPLE_INTERVAL_MS = 500;
 
 const LIGHT_LEVELS: { min: number; level: string; color: string; icon: string; description: string }[] = [
   { min: 0, level: 'Very Dark', color: '#1A1A2E', icon: 'moon', description: 'Almost no light' },
@@ -55,16 +56,17 @@ function hexToLuminance(hex: string): number {
   return 0.299 * r + 0.587 * g + 0.114 * b;
 }
 
-// iOS: camera → dominant color → luminance → lux (estimate). Gamma 1.6 + calibration curve
-// for iPhone brightness compensation; ~±25–40% accuracy, good for real-world comparison.
+// iOS: camera → dominant color → luminance → lux (estimate).
+// Calibration: dark → 0, room ~400–500, outdoor bright 5k–10k (avoid 35k–99k for indoor).
 function luminanceToLux(luminance: number): number {
   const normalized = Math.max(0, Math.min(255, luminance)) / 255;
   const gammaCorrected = Math.pow(normalized, 1.6);
-  let lux = gammaCorrected * MAX_LUX;
-  if (lux < 1000) lux *= 0.8;
-  else if (lux < 10000) lux *= 0.9;
-  else lux *= 1.1;
-  return Math.round(Math.max(MIN_LUX, Math.min(MAX_LUX, lux)));
+  let raw = gammaCorrected * MAX_LUX;
+  // Scale down so indoor (high raw from camera) lands ~400–500, outdoor 5k–10k
+  if (raw < 500) raw = raw;
+  else if (raw < 40000) raw *= 0.012;  // ~35k → ~420 (room)
+  else raw *= 0.1;                       // 50k→5k, 100k→10k (outdoor)
+  return Math.round(Math.max(MIN_LUX, Math.min(MAX_LUX, raw)));
 }
 
 export default function LightMeterScreen() {
@@ -73,6 +75,7 @@ export default function LightMeterScreen() {
   const { theme, isDark } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [lux, setLux] = useState<number>(0);
+  const [displayLux, setDisplayLux] = useState<number>(0);
   const [sensorAvailable, setSensorAvailable] = useState<boolean | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [cameraReady, setCameraReady] = useState(false);
@@ -82,6 +85,8 @@ export default function LightMeterScreen() {
   const sampleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const imageColorsUnavailableRef = useRef(false);
+  const animatedLux = useRef(new Animated.Value(0)).current;
+  const animatedProgress = useRef(new Animated.Value(0)).current;
 
   // Android: real light sensor (no camera needed when available)
   useEffect(() => {
@@ -135,7 +140,7 @@ export default function LightMeterScreen() {
     };
   }, []);
 
-  // iOS (and Android when no sensor): camera-based lux — sample every 2.5s, no photo saved
+  // iOS (and Android when no sensor): camera-based lux — sample every 500ms
   const sampleLuxFromCamera = useRef(async () => {
     if (!cameraRef.current || sensorAvailable === true || imageColorsUnavailableRef.current) return;
     if (!ImageColorsModule) {
@@ -155,14 +160,17 @@ export default function LightMeterScreen() {
       const hex = Platform.OS === 'android'
         ? (colors as { average?: string }).average
         : (colors as { primary?: string }).primary ?? (colors as { background?: string }).background;
+      let newLux: number;
       if (hex) {
         const lum = hexToLuminance(hex);
-        const newLux = luminanceToLux(lum);
-        setLux((prev) => {
-          const blended = Math.round(prev * 0.7 + newLux * 0.3);
-          return Math.max(MIN_LUX, Math.min(MAX_LUX, blended));
-        });
+        newLux = luminanceToLux(lum);
+      } else {
+        newLux = 0;  // no color (e.g. covered camera) → 0
       }
+      setLux((prev) => {
+        const blended = Math.round(prev * 0.6 + newLux * 0.4);
+        return Math.max(MIN_LUX, Math.min(MAX_LUX, blended));
+      });
     } catch (e: any) {
       // Native module missing in Expo Go — stop retrying
       if (e?.message?.includes('ImageColors') || e?.message?.includes('native module')) {
@@ -198,8 +206,38 @@ export default function LightMeterScreen() {
     };
   }, [sensorAvailable, cameraReady, permission?.granted]);
 
+  // Animate lux number and progress bar when lux changes
+  useEffect(() => {
+    const listenerId = animatedLux.addListener(({ value }) => {
+      setDisplayLux(Math.round(value));
+    });
+    return () => animatedLux.removeListener(listenerId);
+  }, []);
+
+  useEffect(() => {
+    const progress = Math.min(1, Math.max(0, lux / MAX_LUX));
+    Animated.parallel([
+      Animated.timing(animatedLux, {
+        toValue: lux,
+        duration: 280,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animatedProgress, {
+        toValue: progress,
+        duration: 280,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [lux]);
+
   const levelInfo = getLevelForLux(lux);
   const progress = Math.min(1, Math.max(0, lux / MAX_LUX));
+  const progressAnimatedStyle = {
+    width: animatedProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0%', '100%'],
+    }),
+  };
   const IconComponent =
     levelInfo.icon === 'sun' ? Sun
     : levelInfo.icon === 'moon' ? Moon
@@ -277,14 +315,14 @@ export default function LightMeterScreen() {
               <IconComponent size={40} color={levelInfo.color} weight="duotone" />
             </View>
             <View style={styles.luxRow}>
-              <Text style={[styles.luxValue, { color: levelInfo.color }]}>{Math.round(lux)}</Text>
+              <Text style={[styles.luxValue, { color: levelInfo.color }]}>{displayLux}</Text>
               <Text style={[styles.luxUnit, { color: levelInfo.color + 'DD' }]}>lux</Text>
             </View>
             <Text style={[styles.levelName, { color: theme.text }]}>{levelInfo.level}</Text>
             <Text style={[styles.levelDesc, { color: theme.textSecondary }]}>{levelInfo.description}</Text>
             <View style={[styles.progressTrack, { backgroundColor: (isDark ? '#fff' : '#000') + '22' }]}>
-              <View
-                style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: levelInfo.color }]}
+              <Animated.View
+                style={[styles.progressFill, progressAnimatedStyle, { backgroundColor: levelInfo.color }]}
               />
             </View>
             <View style={styles.rangeRow}>
